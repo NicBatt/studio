@@ -10,13 +10,14 @@ import { UserProfile } from '@/components/user-profile';
 import { useAuth } from '@/hooks/use-auth';
 import { db, getThemes } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp, onSnapshot, query, where, orderBy, doc, deleteDoc, updateDoc, Timestamp } from "firebase/firestore";
-import { decryptContent } from '@/lib/encryption';
+import { decryptContent, encryptContent } from '@/lib/encryption';
 import { ThemeCalendar } from '@/components/theme-calendar';
 import { Button } from '@/components/ui/button';
 import { BookPlus, FilePlus } from 'lucide-react';
 import { ThemeManager } from '@/components/theme-manager';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { NoteListDaily } from '@/components/note-list-daily';
+import { hexToRgba } from '@/lib/utils';
 
 export default function Home() {
   const { user, loading: authLoading } = useAuth();
@@ -28,6 +29,12 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
 
   const formattedDate = format(selectedDate, 'yyyy-MM-dd');
+  
+  const activeTheme = themes.find(theme => {
+    const start = parseISO(theme.startDate);
+    const end = parseISO(theme.endDate);
+    return selectedDate >= start && selectedDate <= end;
+  });
 
   // Load themes from Firestore
   useEffect(() => {
@@ -149,6 +156,17 @@ export default function Home() {
                         onDayClick={handleDayClick}
                         selectedDate={selectedDate}
                     />
+                    {activeTheme && (
+                      <div 
+                        className="p-4 m-2 rounded-lg text-center border" 
+                        style={{ 
+                            backgroundColor: hexToRgba(activeTheme.color, 0.2),
+                            borderColor: activeTheme.color
+                        }}
+                      >
+                          <h3 className="text-xl font-bold">{activeTheme.label}</h3>
+                      </div>
+                    )}
                     <div className="flex-grow border-t mt-2">
                       <NoteListDaily
                           notes={notes}
