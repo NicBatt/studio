@@ -25,7 +25,7 @@ const HalfCircle = () => (
         className="text-green-500"
     >
         <circle cx="12" cy="12" r="10"></circle>
-        <path d="M12 2v20" style={{ strokeWidth: 0, fill: 'currentColor' }} />
+        <path d="M12 2a10 10 0 0 0 0 20v-20z" style={{ strokeWidth: 0, fill: 'currentColor' }} />
     </svg>
 );
 
