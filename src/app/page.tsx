@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import type { Note, Theme, Task } from '@/lib/types';
 import { SidebarProvider, Sidebar, SidebarInset, SidebarHeader, SidebarContent, SidebarFooter, SidebarTrigger } from "@/components/ui/sidebar";
 import { DailyNotes } from '@/components/daily-notes';
@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button';
 import { BookPlus, FilePlus, Palette } from 'lucide-react';
 import { ThemeManager } from '@/components/theme-manager';
 import { format, parseISO } from 'date-fns';
-import { hexToRgba } from '@/lib/utils';
+import { isTaskForDate } from '@/lib/utils';
 import { NoteListDaily } from '@/components/note-list-daily';
 import { TaskManager } from '@/components/task-manager';
 
@@ -39,6 +39,11 @@ export default function Home() {
     const end = parseISO(theme.endDate);
     return selectedDate >= start && selectedDate <= end;
   });
+
+  const todaysTasks = useMemo(() => {
+    return tasks.filter(task => isTaskForDate(task, selectedDate));
+  }, [tasks, selectedDate]);
+
 
   // Load themes and tasks from Firestore
   useEffect(() => {
@@ -193,6 +198,7 @@ export default function Home() {
             selectedDate={selectedDate} 
             user={user}
             notes={notes}
+            tasks={todaysTasks}
             activeTheme={activeTheme}
             activeNoteId={activeNoteId}
             onNewNote={handleNewNote}

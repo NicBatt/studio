@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import type { Note, Theme } from '@/lib/types';
+import type { Note, Theme, Task } from '@/lib/types';
 import { User } from 'firebase/auth';
 import { db } from '@/lib/firebase';
 import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
@@ -12,18 +12,20 @@ import { Skeleton } from './ui/skeleton';
 import { format } from 'date-fns';
 import { NoteListDaily } from './note-list-daily';
 import { hexToRgba } from '@/lib/utils';
+import { TaskList } from './task-list';
 
 interface DailyNotesProps {
     selectedDate: Date;
     user: User | null;
     notes: Note[];
+    tasks: Task[];
     activeNoteId: string | null;
     activeTheme: Theme | undefined;
     onNewNote: () => void;
     trigger?: React.ReactNode;
 }
 
-export function DailyNotes({ selectedDate, user, notes, activeNoteId, activeTheme, onNewNote, trigger }: DailyNotesProps) {
+export function DailyNotes({ selectedDate, user, notes, tasks, activeNoteId, activeTheme, onNewNote, trigger }: DailyNotesProps) {
     const [isLoading, setIsLoading] = useState(false); // No longer fetching here
     
     const handleUpdateNote = async (id: string, content: string) => {
@@ -72,6 +74,7 @@ export function DailyNotes({ selectedDate, user, notes, activeNoteId, activeThem
             </header>
             <div className="p-4 border-b">
                 <h2 className="text-lg font-semibold">{format(selectedDate, "MMMM d, yyyy")}</h2>
+                <TaskList tasks={tasks} />
             </div>
             <div className="flex-grow">
                 <NoteEditor 
