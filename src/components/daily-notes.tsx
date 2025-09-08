@@ -18,9 +18,10 @@ interface DailyNotesProps {
     notes: Note[];
     activeNoteId: string | null;
     onNewNote: () => void;
+    trigger?: React.ReactNode;
 }
 
-export function DailyNotes({ selectedDate, user, notes, activeNoteId, onNewNote }: DailyNotesProps) {
+export function DailyNotes({ selectedDate, user, notes, activeNoteId, onNewNote, trigger }: DailyNotesProps) {
     const [isLoading, setIsLoading] = useState(false); // No longer fetching here
     
     const handleUpdateNote = async (id: string, content: string) => {
@@ -32,7 +33,8 @@ export function DailyNotes({ selectedDate, user, notes, activeNoteId, onNewNote 
                 content: encryptedContent,
                 lastModified: serverTimestamp()
             });
-        } catch (error) {
+        } catch (error)
+        {
             console.error("Error updating note:", error);
         }
     };
@@ -49,7 +51,8 @@ export function DailyNotes({ selectedDate, user, notes, activeNoteId, onNewNote 
 
     return (
         <div className="h-full flex flex-col">
-            <header className="p-4 border-b">
+            <header className="p-4 border-b flex items-center gap-2">
+                {trigger}
                 <h1 className="text-2xl font-bold font-headline">{format(selectedDate, "MMMM d, yyyy")}</h1>
             </header>
             <div className="flex-grow">

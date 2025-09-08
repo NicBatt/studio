@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import type { Note, Theme } from '@/lib/types';
-import { SidebarProvider, Sidebar, SidebarInset, SidebarHeader, SidebarContent, SidebarFooter } from "@/components/ui/sidebar";
+import { SidebarProvider, Sidebar, SidebarInset, SidebarHeader, SidebarContent, SidebarFooter, SidebarTrigger } from "@/components/ui/sidebar";
 import { DailyNotes } from '@/components/daily-notes';
 import { Skeleton } from '@/components/ui/skeleton';
 import { UserProfile } from '@/components/user-profile';
@@ -168,13 +168,6 @@ export default function Home() {
                           <h3 className="text-xl font-bold">{activeTheme.label}</h3>
                       </div>
                     )}
-                    <div className="flex-grow" />
-                    <div className='p-2 border-t'>
-                        <Button onClick={handleNewNote} className="w-full">
-                            <FilePlus className="mr-2"/>
-                            New Note
-                        </Button>
-                    </div>
                 </SidebarContent>
                 <SidebarFooter className="p-2">
                     <Button onClick={() => setIsThemeManagerOpen(true)} className="w-full">
@@ -197,6 +190,7 @@ export default function Home() {
             notes={notes}
             activeNoteId={activeNoteId}
             onNewNote={handleNewNote}
+            trigger={<SidebarTrigger />}
         />
       </SidebarInset>
       {user && <ThemeManager isOpen={isThemeManagerOpen} onOpenChange={setIsThemeManagerOpen} user={user} existingThemes={themes} />}
