@@ -70,12 +70,8 @@ export function NoteEditor({ activeNote, onUpdateNote, onNewNote, disabled = fal
   if (disabled || !user) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-8 animate-fade-in">
-        <h2 className="text-2xl font-headline mb-4">No notes for this day</h2>
-        <p className="mb-4">Select a different day or create a new note to begin.</p>
-        <Button onClick={onNewNote}>
-            <FilePlus className="mr-2" />
-            Create Note
-        </Button>
+        <h2 className="text-2xl font-headline mb-2">Select a note</h2>
+        <p>Select a note from the list or create a new one.</p>
       </div>
     );
   }
