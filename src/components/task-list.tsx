@@ -1,40 +1,48 @@
 
 "use client";
 
-import type { Task } from '@/lib/types';
-import { Checkbox } from './ui/checkbox';
+import type { Task, TaskProgress } from '@/lib/types';
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
+import { ProgressCircle } from './progress-circle';
 
 interface TaskListProps {
   tasks: Task[];
 }
 
 export function TaskList({ tasks }: TaskListProps) {
-  const [checkedTasks, setCheckedTasks] = useState<Record<string, boolean>>({});
+  const [taskProgress, setTaskProgress] = useState<Record<string, TaskProgress>>({});
 
-  // Reset checked state when the tasks prop changes (i.e., when the day changes)
   useEffect(() => {
     const todayKey = format(new Date(), 'yyyy-MM-dd');
-    const storedToday = localStorage.getItem('checkedTasksDate');
+    const storedDate = localStorage.getItem('taskProgressDate');
     
-    if (storedToday === todayKey) {
-        const storedChecked = JSON.parse(localStorage.getItem('checkedTasks') || '{}');
-        setCheckedTasks(storedChecked);
+    if (storedDate === todayKey) {
+        const storedProgress = JSON.parse(localStorage.getItem('taskProgress') || '{}');
+        setTaskProgress(storedProgress);
     } else {
-        localStorage.setItem('checkedTasksDate', todayKey);
-        localStorage.setItem('checkedTasks', '{}');
-        setCheckedTasks({});
+        localStorage.setItem('taskProgressDate', todayKey);
+        localStorage.setItem('taskProgress', '{}');
+        setTaskProgress({});
     }
-
   }, [tasks]);
 
-  const handleCheckedChange = (taskId: string, isChecked: boolean) => {
-    const newCheckedTasks = { ...checkedTasks, [taskId]: isChecked };
-    setCheckedTasks(newCheckedTasks);
-    localStorage.setItem('checkedTasks', JSON.stringify(newCheckedTasks));
+  const handleProgressChange = (taskId: string, newProgress: TaskProgress) => {
+    const newProgressState = { ...taskProgress, [taskId]: newProgress };
+    setTaskProgress(newProgressState);
+    localStorage.setItem('taskProgress', JSON.stringify(newProgressState));
   };
 
+  const getMilestoneText = (task: Task) => {
+    const progress = taskProgress[task.id];
+    if (progress === 'half' && task.milestoneHalf) {
+      return ` — ${task.milestoneHalf}`;
+    }
+    if (progress === 'full' && task.milestoneFull) {
+      return ` — ${task.milestoneFull}`;
+    }
+    return '';
+  };
 
   if (tasks.length === 0) {
     return null;
@@ -43,19 +51,21 @@ export function TaskList({ tasks }: TaskListProps) {
   return (
     <div className="mt-4 space-y-2">
         <h3 className="text-sm font-medium text-muted-foreground">Daily Tasks</h3>
-        <div className="space-y-2">
+        <div className="space-y-3">
         {tasks.map(task => (
-            <div key={task.id} className="flex items-center space-x-2">
-                <Checkbox 
-                    id={`task-${task.id}`} 
-                    checked={!!checkedTasks[task.id]}
-                    onCheckedChange={(checked) => handleCheckedChange(task.id, !!checked)}
+            <div key={task.id} className="flex items-center space-x-3">
+                <ProgressCircle
+                    progress={taskProgress[task.id] || 'none'}
+                    onProgressChange={(newProgress) => handleProgressChange(task.id, newProgress)}
                 />
                 <label
                     htmlFor={`task-${task.id}`}
                     className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                 >
                     {task.label}
+                    <span className="text-muted-foreground font-normal italic">
+                        {getMilestoneText(task)}
+                    </span>
                 </label>
             </div>
         ))}

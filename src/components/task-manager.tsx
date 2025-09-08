@@ -52,6 +52,8 @@ export function TaskManager({ isOpen, onOpenChange, user, existingTasks }: TaskM
   const [everyXDays, setEveryXDays] = useState<number>(2);
   const [weeklyDays, setWeeklyDays] = useState<number[]>([new Date().getDay()]);
   const [monthlyDay, setMonthlyDay] = useState<number>(new Date().getDate());
+  const [milestoneHalf, setMilestoneHalf] = useState('');
+  const [milestoneFull, setMilestoneFull] = useState('');
 
   useEffect(() => {
     if (editingTask) {
@@ -62,6 +64,8 @@ export function TaskManager({ isOpen, onOpenChange, user, existingTasks }: TaskM
       if (recurrence.type === 'every_x_days') setEveryXDays(recurrence.days);
       if (recurrence.type === 'weekly') setWeeklyDays(recurrence.days);
       if (recurrence.type === 'monthly') setMonthlyDay(recurrence.day);
+      setMilestoneHalf(editingTask.milestoneHalf || '');
+      setMilestoneFull(editingTask.milestoneFull || '');
     }
   }, [editingTask]);
 
@@ -72,6 +76,8 @@ export function TaskManager({ isOpen, onOpenChange, user, existingTasks }: TaskM
     setEveryXDays(2);
     setWeeklyDays([new Date().getDay()]);
     setMonthlyDay(new Date().getDate());
+    setMilestoneHalf('');
+    setMilestoneFull('');
     setEditingTask(null);
     setIsFormOpen(false);
   };
@@ -107,6 +113,8 @@ export function TaskManager({ isOpen, onOpenChange, user, existingTasks }: TaskM
       label,
       startDate: format(startDate, 'yyyy-MM-dd'),
       recurrence,
+      milestoneHalf,
+      milestoneFull,
     };
     
     if (editingTask) {
@@ -175,8 +183,17 @@ export function TaskManager({ isOpen, onOpenChange, user, existingTasks }: TaskM
         {isFormOpen ? (
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="label" className="text-right">Label</Label>
+              <Label htmlFor="label" className="text-right">Task Name</Label>
               <Input id="label" value={label} onChange={(e) => setLabel(e.target.value)} className="col-span-3"/>
+            </div>
+
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="milestoneHalf" className="text-right">Half Complete</Label>
+              <Input id="milestoneHalf" value={milestoneHalf} onChange={(e) => setMilestoneHalf(e.target.value)} className="col-span-3" placeholder="Milestone for 50% progress (optional)"/>
+            </div>
+             <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="milestoneFull" className="text-right">Fully Complete</Label>
+              <Input id="milestoneFull" value={milestoneFull} onChange={(e) => setMilestoneFull(e.target.value)} className="col-span-3" placeholder="Milestone for 100% progress (optional)" />
             </div>
 
             <div className="grid grid-cols-4 items-center gap-4">

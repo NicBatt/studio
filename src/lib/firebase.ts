@@ -126,7 +126,9 @@ export const createTask = async (task: Omit<Task, 'id'>): Promise<string | null>
         const tasksRef = collection(db, "tasks");
         const docRef = await addDoc(tasksRef, {
             ...task,
-            label: encryptContent(task.label, task.userId)
+            label: encryptContent(task.label, task.userId),
+            milestoneHalf: task.milestoneHalf ? encryptContent(task.milestoneHalf, task.userId) : '',
+            milestoneFull: task.milestoneFull ? encryptContent(task.milestoneFull, task.userId) : '',
         });
         toast({ title: 'Task Created!', description: `Task "${task.label}" was saved.`});
         return docRef.id;
@@ -146,7 +148,9 @@ export const updateTask = async (task: Task): Promise<void> => {
         const taskRef = doc(db, 'tasks', task.id);
         await updateDoc(taskRef, {
             ...task,
-            label: encryptContent(task.label, task.userId)
+            label: encryptContent(task.label, task.userId),
+            milestoneHalf: task.milestoneHalf ? encryptContent(task.milestoneHalf, task.userId) : '',
+            milestoneFull: task.milestoneFull ? encryptContent(task.milestoneFull, task.userId) : '',
         });
         toast({ title: 'Task Updated!', description: `Task "${task.label}" was saved.`});
     } catch (error) {
@@ -183,6 +187,8 @@ export const getTasks = (userId: string, callback: (tasks: Task[]) => void) => {
                 id: doc.id, 
                 ...taskData,
                 label: decryptContent(taskData.label, userId),
+                milestoneHalf: taskData.milestoneHalf ? decryptContent(taskData.milestoneHalf, userId) : '',
+                milestoneFull: taskData.milestoneFull ? decryptContent(taskData.milestoneFull, userId) : '',
             });
         });
         callback(tasks);

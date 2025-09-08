@@ -31,4 +31,8 @@ export type Task = {
     label: string;
     recurrence: Recurrence;
     startDate: string; // YYYY-MM-DD
+    milestoneHalf?: string;
+    milestoneFull?: string;
 };
+
+export type TaskProgress = 'none' | 'half' | 'full';
