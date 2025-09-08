@@ -1,6 +1,6 @@
 
 "use client";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { User } from 'firebase/auth';
 import {
   Dialog,
@@ -15,12 +15,12 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar as CalendarIcon, Trash2 } from 'lucide-react';
+import { Calendar as CalendarIcon, Trash2, Pencil } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { addDays, format, parseISO } from 'date-fns';
 import { DateRange, SelectRangeEventHandler } from 'react-day-picker';
 import { SketchPicker } from 'react-color';
-import { createTheme, deleteTheme } from '@/lib/firebase';
+import { createTheme, deleteTheme, updateTheme } from '@/lib/firebase';
 import type { Theme } from '@/lib/types';
 import {
   AlertDialog,
@@ -33,7 +33,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { encryptContent, decryptContent } from '@/lib/encryption';
+import { encryptContent } from '@/lib/encryption';
 
 
 interface ThemeManagerProps {
@@ -43,47 +43,84 @@ interface ThemeManagerProps {
   existingThemes: Theme[];
 }
 
+const defaultDateRange = {
+    from: new Date(),
+    to: addDays(new Date(), 7),
+};
+
 export function ThemeManager({ isOpen, onOpenChange, user, existingThemes }: ThemeManagerProps) {
   const [label, setLabel] = useState('');
   const [description, setDescription] = useState('');
   const [color, setColor] = useState('#f44336');
-  const [dateRange, setDateRange] = useState<DateRange | undefined>({
-    from: new Date(),
-    to: addDays(new Date(), 7),
-  });
-  const [isCreating, setIsCreating] = useState(false);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(defaultDateRange);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingTheme, setEditingTheme] = useState<Theme | null>(null);
 
-  const handleCreateTheme = async () => {
+  useEffect(() => {
+    if (editingTheme) {
+        setLabel(editingTheme.label);
+        setDescription(editingTheme.description || '');
+        setColor(editingTheme.color);
+        setDateRange({
+            from: parseISO(editingTheme.startDate),
+            to: parseISO(editingTheme.endDate)
+        });
+    }
+  }, [editingTheme]);
+
+  const resetForm = () => {
+    setLabel('');
+    setDescription('');
+    setColor('#f44336');
+    setDateRange(defaultDateRange);
+    setEditingTheme(null);
+    setIsFormOpen(false);
+  };
+
+  const handleSaveTheme = async () => {
     if (!label || !dateRange?.from || !dateRange?.to) {
       alert('Please fill in all required fields.');
       return;
     }
     
-    await createTheme({
+    const themeData = {
       userId: user.uid,
-      label: encryptContent(label, user.uid),
-      description: encryptContent(description, user.uid),
+      label,
+      description,
       color,
       startDate: format(dateRange.from, 'yyyy-MM-dd'),
       endDate: format(dateRange.to, 'yyyy-MM-dd'),
-    });
+    };
     
-    // Reset form
-    setLabel('');
-    setDescription('');
-    setColor('#f44336');
-    setDateRange({ from: new Date(), to: addDays(new Date(), 7) });
-    setIsCreating(false);
+    if (editingTheme) {
+        await updateTheme({ ...themeData, id: editingTheme.id });
+    } else {
+        await createTheme(themeData);
+    }
+    
+    resetForm();
   };
 
   const handleDeleteTheme = async (themeId: string) => {
     await deleteTheme(themeId);
   }
+
+  const handleOpenEdit = (theme: Theme) => {
+    setEditingTheme(theme);
+    setIsFormOpen(true);
+  }
+
+  const handleOpenCreate = () => {
+    resetForm();
+    setIsFormOpen(true);
+  }
   
-  const disabledDays = existingThemes.map(theme => ({
-    from: parseISO(theme.startDate),
-    to: parseISO(theme.endDate)
-  }));
+  const disabledDays = existingThemes
+    .filter(theme => theme.id !== editingTheme?.id) // Exclude current editing theme from disabled dates
+    .map(theme => ({
+        from: parseISO(theme.startDate),
+        to: parseISO(theme.endDate)
+    }));
 
   const handleDateSelect: SelectRangeEventHandler = (range, selectedDay) => {
     if (dateRange?.from && dateRange.to) {
@@ -99,18 +136,21 @@ export function ThemeManager({ isOpen, onOpenChange, user, existingThemes }: The
     <Dialog open={isOpen} onOpenChange={(open) => {
         onOpenChange(open);
         if (!open) {
-            setIsCreating(false); // Reset view when closing dialog
+            resetForm();
         }
     }}>
       <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Manage Themes</DialogTitle>
+          <DialogTitle>{editingTheme ? "Edit Theme" : "Manage Themes"}</DialogTitle>
           <DialogDescription>
-            Create, view, and manage your journal themes.
+            {isFormOpen
+              ? (editingTheme ? 'Edit your existing journal theme.' : 'Create a new journal theme.')
+              : 'Create, view, and manage your journal themes.'
+            }
           </DialogDescription>
         </DialogHeader>
         
-        {isCreating ? (
+        {isFormOpen ? (
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="label" className="text-right">
@@ -179,7 +219,7 @@ export function ThemeManager({ isOpen, onOpenChange, user, existingThemes }: The
             <div className="grid grid-cols-4 items-start gap-4">
               <Label className="text-right pt-2">Color</Label>
               <div className="col-span-3">
-                <SketchPicker color={color} onChangeComplete={(c) => setColor(c.hex)} />
+                <SketchPicker color={color} onChange={(c) => setColor(c.hex)} />
               </div>
             </div>
           </div>
@@ -197,25 +237,30 @@ export function ThemeManager({ isOpen, onOpenChange, user, existingThemes }: The
                                  <p className="text-sm text-muted-foreground">{format(parseISO(theme.startDate), 'MMM d')} - {format(parseISO(theme.endDate), 'MMM d, yyyy')}</p>
                              </div>
                            </div>
-                           <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                    <Button variant="ghost" size="icon">
-                                        <Trash2 className="w-4 h-4" />
-                                    </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            This will permanently delete the theme "{theme.label}". This action cannot be undone.
-                                        </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction onClick={() => handleDeleteTheme(theme.id)}>Delete</AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
+                           <div className="flex items-center">
+                                <Button variant="ghost" size="icon" onClick={() => handleOpenEdit(theme)}>
+                                    <Pencil className="w-4 h-4" />
+                                </Button>
+                               <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button variant="ghost" size="icon">
+                                            <Trash2 className="w-4 h-4" />
+                                        </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                This will permanently delete the theme "{theme.label}". This action cannot be undone.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={() => handleDeleteTheme(theme.id)}>Delete</AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                           </div>
                         </div>
                     ))
                 ) : (
@@ -226,15 +271,15 @@ export function ThemeManager({ isOpen, onOpenChange, user, existingThemes }: The
         )}
 
         <DialogFooter>
-          {isCreating ? (
+          {isFormOpen ? (
             <>
-              <Button variant="outline" onClick={() => setIsCreating(false)}>
+              <Button variant="outline" onClick={resetForm}>
                 Cancel
               </Button>
-              <Button onClick={handleCreateTheme}>Create Theme</Button>
+              <Button onClick={handleSaveTheme}>Save Theme</Button>
             </>
           ) : (
-            <Button onClick={() => setIsCreating(true)}>Create New Theme</Button>
+            <Button onClick={handleOpenCreate}>Create New Theme</Button>
           )}
         </DialogFooter>
       </DialogContent>

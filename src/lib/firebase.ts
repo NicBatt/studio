@@ -2,10 +2,10 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs, onSnapshot, writeBatch, doc } from "firebase/firestore";
+import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs, onSnapshot, writeBatch, doc, updateDoc } from "firebase/firestore";
 import type { Theme } from '@/lib/types';
 import { toast } from "@/hooks/use-toast";
-import { decryptContent } from "./encryption";
+import { encryptContent, decryptContent } from "./encryption";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -52,7 +52,11 @@ export const createTheme = async (theme: Omit<Theme, 'id'>): Promise<string | nu
             return null;
         }
 
-        const docRef = await addDoc(themesRef, theme);
+        const docRef = await addDoc(themesRef, {
+             ...theme,
+            label: encryptContent(theme.label, theme.userId),
+            description: theme.description ? encryptContent(theme.description, theme.userId) : ''
+        });
         return docRef.id;
     } catch (error) {
         console.error("Error creating theme:", error);
@@ -64,6 +68,25 @@ export const createTheme = async (theme: Omit<Theme, 'id'>): Promise<string | nu
         return null;
     }
 };
+
+export const updateTheme = async (theme: Theme): Promise<void> => {
+    try {
+        const themeRef = doc(db, 'themes', theme.id);
+        await updateDoc(themeRef, {
+            ...theme,
+            label: encryptContent(theme.label, theme.userId),
+            description: theme.description ? encryptContent(theme.description, theme.userId) : ''
+        });
+    } catch (error) {
+        console.error('Error updating theme:', error);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Could not update the theme.',
+        });
+    }
+};
+
 
 export const deleteTheme = async (themeId: string): Promise<void> => {
     try {
