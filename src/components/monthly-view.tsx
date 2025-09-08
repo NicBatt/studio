@@ -3,7 +3,7 @@
 
 import { useState, useMemo } from 'react';
 import type { Task, TaskProgress } from '@/lib/types';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addMonths, subMonths, getDay } from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addMonths, subMonths, getDay, startOfWeek, endOfWeek } from 'date-fns';
 import { ProgressCircle } from './progress-circle';
 import { isTaskForDate, cn } from '@/lib/utils';
 import { ScrollArea } from './ui/scroll-area';
@@ -20,19 +20,17 @@ interface MonthlyViewProps {
 
 const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-export function MonthlyView({ allTasks, allProgress, onProgressChange, uniqueTasks }: MonthlyViewProps) {
+export function MonthlyView({ allTasks, allProgress, onProgressChange }: MonthlyViewProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
-  const monthDates = useMemo(() => {
-    const start = startOfMonth(currentMonth);
-    const end = endOfMonth(currentMonth);
-    return eachDayOfInterval({ start, end });
+  const monthGridDays = useMemo(() => {
+    const monthStart = startOfMonth(currentMonth);
+    const monthEnd = endOfMonth(currentMonth);
+    const gridStart = startOfWeek(monthStart);
+    const gridEnd = endOfWeek(monthEnd);
+    return eachDayOfInterval({ start: gridStart, end: gridEnd });
   }, [currentMonth]);
   
-  const firstDayOfMonth = getDay(startOfMonth(currentMonth)); // 0 = Sunday, 1 = Monday...
-  const emptyCells = Array(firstDayOfMonth).fill(null);
-
-
   const goToNextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
   const goToPreviousMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
 
@@ -47,44 +45,50 @@ export function MonthlyView({ allTasks, allProgress, onProgressChange, uniqueTas
                 <ChevronRight />
             </Button>
         </div>
+        
+        <div className="grid grid-cols-7 text-center font-medium text-muted-foreground text-sm">
+             {WEEKDAY_LABELS.map(label => (
+                <div key={label} className="py-2">{label}</div>
+            ))}
+        </div>
+
         <ScrollArea className="flex-grow">
-            <div className="flex justify-center">
-                <div className="grid grid-cols-7 gap-2 p-2" style={{ gridTemplateRows: `repeat(${uniqueTasks.length + 1}, auto)`}}>
-                    {WEEKDAY_LABELS.map(label => (
-                        <div key={label} className="text-center font-medium text-muted-foreground">{label}</div>
-                    ))}
-                    {emptyCells.map((_, index) => <div key={`empty-header-${index}`}></div>)}
-                    {monthDates.map(date => (
-                         <div key={date.toISOString()} className={cn("text-center font-medium", isSameDay(date, new Date()) && "text-primary")}>
-                            {format(date, 'd')}
-                         </div>
-                    ))}
-
-                     {uniqueTasks.map(task => (
-                         <>
-                            {emptyCells.map((_, index) => <div key={`empty-task-${task.id}-${index}`}></div>)}
-                            {monthDates.map(date => {
-                                const dateKey = format(date, 'yyyy-MM-dd');
-                                const isVisible = isTaskForDate(task, date);
-
-                                if (!isVisible) {
-                                    return <div key={`${dateKey}-${task.id}`}></div>;
-                                }
-
-                                const progress = allProgress[dateKey]?.[task.id] || 'none';
-
-                                return (
-                                    <div key={`${dateKey}-${task.id}`} className="flex justify-center items-center h-8 w-8">
-                                        <ProgressCircle
-                                            progress={progress}
+            <div className="grid grid-cols-7 grid-rows-6 gap-1 p-1">
+                {monthGridDays.map(day => {
+                    const dateKey = format(day, 'yyyy-MM-dd');
+                    const isCurrentMonth = day.getMonth() === currentMonth.getMonth();
+                    const tasksForDay = allTasks.filter(task => isTaskForDate(task, day));
+                    
+                    return (
+                        <div 
+                            key={day.toISOString()}
+                            className={cn(
+                                "border rounded-md min-h-[90px] p-1 flex flex-col",
+                                isCurrentMonth ? "bg-background" : "bg-muted/50",
+                                isSameDay(day, new Date()) && "border-primary"
+                            )}
+                        >
+                            <span className={cn(
+                                "font-semibold text-sm",
+                                isCurrentMonth ? "text-foreground" : "text-muted-foreground/60"
+                            )}>
+                                {format(day, 'd')}
+                            </span>
+                            {tasksForDay.length > 0 && (
+                                <div className="flex-grow flex flex-wrap gap-1.5 mt-1 justify-start items-start">
+                                    {tasksForDay.map(task => (
+                                         <ProgressCircle
+                                            key={task.id}
+                                            progress={allProgress[dateKey]?.[task.id] || 'none'}
                                             onProgressChange={(newProgress) => onProgressChange(dateKey, task.id, newProgress)}
+                                            size="small"
                                         />
-                                    </div>
-                                )
-                            })}
-                        </>
-                    ))}
-                </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )
+                })}
             </div>
         </ScrollArea>
     </div>
