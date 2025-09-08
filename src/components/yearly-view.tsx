@@ -9,6 +9,8 @@ import { AllProgress } from './weekly-progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
 import { Button } from './ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Progress } from './ui/progress';
+
 
 interface YearlyViewProps {
   allTasks: Task[];
@@ -44,14 +46,6 @@ export function YearlyView({ allTasks, allProgress }: YearlyViewProps) {
     return (totalScore / tasksForDay.length) * 100;
   };
   
-  const getColorClass = (percentage: number) => {
-    if (percentage < 0) return 'bg-muted/20'; // No tasks
-    if (percentage === 0) return 'bg-muted/50';
-    if (percentage <= 33) return 'bg-green-200 dark:bg-green-900';
-    if (percentage <= 66) return 'bg-green-400 dark:bg-green-700';
-    return 'bg-green-600 dark:bg-green-500';
-  };
-
   const goToNextYear = () => setCurrentYear(addYears(currentYear, 1));
   const goToPreviousYear = () => setCurrentYear(subYears(currentYear, 1));
 
@@ -59,12 +53,8 @@ export function YearlyView({ allTasks, allProgress }: YearlyViewProps) {
   const gridCells: (Date | null)[] = Array(7 * 53).fill(null);
   
   // Place each date in the correct grid cell
-  const firstDayOfYear = startOfYear(currentYear);
-  const firstDayOfWeek = getDay(firstDayOfYear); // Sunday = 0, which is the start of our grid row
-
   yearDates.forEach(date => {
       const dayOfWeek = getDay(date); // Sunday = 0
-      // Calculate week of year, making sure to account for the starting day of the week
       const weekOfYear = getWeek(date, { weekStartsOn: 0, firstWeekContainsDate: 1 });
       const gridIndex = dayOfWeek + (weekOfYear -1) * 7;
       
@@ -86,37 +76,51 @@ export function YearlyView({ allTasks, allProgress }: YearlyViewProps) {
                 <ChevronRight />
             </Button>
         </div>
-        <div className="flex gap-4">
-             <div className="flex flex-col gap-2 text-xs text-muted-foreground pt-6">
-                <span className="h-3">Sun</span>
-                <span className="h-3">Mon</span>
-                <span className="h-3">Tue</span>
-                <span className="h-3">Wed</span>
-                <span className="h-3">Thu</span>
-                <span className="h-3">Fri</span>
-                <span className="h-3">Sat</span>
+        <div className="flex gap-4 overflow-x-auto p-2">
+             <div className="flex flex-col text-xs text-muted-foreground pt-1 space-y-2">
+                <span className="h-4">Sun</span>
+                <span className="h-4">Mon</span>
+                <span className="h-4">Tue</span>
+                <span className="h-4">Wed</span>
+                <span className="h-4">Thu</span>
+                <span className="h-4">Fri</span>
+                <span className="h-4">Sat</span>
             </div>
-            <div className="grid grid-rows-7 grid-flow-col gap-1">
+            <div className="grid grid-rows-7 grid-flow-col gap-2">
             {gridCells.map((date, index) => {
+              const daySize = 'w-4 h-4';
               if (!date) {
-                return <div key={index} className="w-3 h-3" />;
+                return <div key={index} className={cn(daySize)} />;
               }
               const percentage = getCompletionPercentage(date);
+              
               return (
                 <Tooltip key={index}>
                     <TooltipTrigger asChild>
                     <div
                         className={cn(
-                        'w-3 h-3 rounded-sm',
-                        getColorClass(percentage),
-                        isSameDay(date, new Date()) && 'ring-2 ring-primary ring-offset-2 ring-offset-background'
+                          'rounded-sm bg-muted/30 overflow-hidden',
+                          daySize,
+                          isSameDay(date, new Date()) && 'ring-2 ring-primary ring-offset-2 ring-offset-background'
                         )}
-                    />
+                    >
+                      {percentage >= 0 && (
+                        <div 
+                            className="h-full w-full bg-green-500" 
+                            style={{ 
+                                transform: `translateY(${(100 - percentage)}%)`,
+                                transition: 'transform 0.3s ease-in-out'
+                             }}
+                        />
+                      )}
+                    </div>
                     </TooltipTrigger>
                     <TooltipContent>
                     <p>{format(date, 'MMMM d, yyyy')}</p>
-                    {percentage >= 0 && (
+                    {percentage >= 0 ? (
                         <p>{Math.round(percentage)}% complete</p>
+                    ) : (
+                        <p>No tasks scheduled</p>
                     )}
                     </TooltipContent>
                 </Tooltip>
