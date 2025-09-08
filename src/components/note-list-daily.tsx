@@ -1,3 +1,4 @@
+
 "use client";
 
 import type { Note } from '@/lib/types';
@@ -10,39 +11,36 @@ import {
   SidebarMenuAction,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { FilePlus, Trash2, BookText } from "lucide-react";
-import { formatDistanceToNow } from "date-fns/formatDistanceToNow";
+import { FilePlus, Trash2 } from "lucide-react";
+import { format, formatDistanceToNow } from "date-fns";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { useAuth } from '@/hooks/use-auth';
 import { Timestamp } from 'firebase/firestore';
 
 type NoteListProps = {
   notes: Note[];
   activeNoteId: string | null;
+  selectedDate: Date;
   onSelectNote: (id: string) => void;
   onNewNote: () => void;
   onDeleteNote: (id: string) => void;
-  disabled?: boolean;
 };
 
-export function NoteList({ notes, activeNoteId, onSelectNote, onNewNote, onDeleteNote, disabled = false }: NoteListProps) {
-  const { user } = useAuth();
+export function NoteList({ notes, activeNoteId, selectedDate, onSelectNote, onNewNote, onDeleteNote }: NoteListProps) {
     
   return (
-    <>
-      <SidebarHeader className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-            <BookText className="size-6 text-primary" />
-            <h2 className="text-xl font-headline font-bold">Theme Journal</h2>
+    <div className="flex flex-col h-full">
+      <header className="p-4 border-b">
+        <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold">{format(selectedDate, "MMMM d, yyyy")}</h2>
+            <Button variant="ghost" size="icon" onClick={onNewNote} aria-label="New Note">
+                <FilePlus />
+            </Button>
         </div>
-        <Button variant="ghost" size="icon" onClick={onNewNote} aria-label="New Note" disabled={disabled}>
-          <FilePlus />
-        </Button>
-      </SidebarHeader>
-      <SidebarContent>
-        <SidebarMenu>
-          {notes.length > 0 ? (
-            notes.map(note => {
+      </header>
+      <div className="flex-grow overflow-y-auto">
+        {notes.length > 0 ? (
+            <SidebarMenu>
+            {notes.map(note => {
               const title = note.content.split('\n')[0].trim() || 'Untitled Note';
               const lastModifiedDate = typeof note.lastModified === 'number' 
                 ? new Date(note.lastModified) 
@@ -54,7 +52,6 @@ export function NoteList({ notes, activeNoteId, onSelectNote, onNewNote, onDelet
                     onClick={() => onSelectNote(note.id)}
                     isActive={note.id === activeNoteId}
                     className="h-auto py-2 flex-col items-start"
-                    disabled={disabled}
                   >
                     <span className="font-semibold text-sm truncate w-full">{title}</span>
                     <span className="text-xs text-muted-foreground">
@@ -63,7 +60,7 @@ export function NoteList({ notes, activeNoteId, onSelectNote, onNewNote, onDelet
                   </SidebarMenuButton>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                        <SidebarMenuAction showOnHover disabled={disabled}>
+                        <SidebarMenuAction showOnHover>
                             <Trash2 className="size-4" />
                         </SidebarMenuAction>
                     </AlertDialogTrigger>
@@ -82,14 +79,14 @@ export function NoteList({ notes, activeNoteId, onSelectNote, onNewNote, onDelet
                   </AlertDialog>
                 </SidebarMenuItem>
               );
-            })
+            })}
+            </SidebarMenu>
           ) : (
             <div className="p-4 text-center text-sm text-muted-foreground">
-              {user ? "No notes yet. Create one!" : "Please sign in."}
+              No notes for this day.
             </div>
           )}
-        </SidebarMenu>
-      </SidebarContent>
-    </>
+      </div>
+    </div>
   );
 }

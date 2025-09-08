@@ -1,7 +1,9 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs, onSnapshot, writeBatch } from "firebase/firestore";
+import type { Theme } from '@/lib/types';
+import { toast } from "@/hooks/use-toast";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -19,5 +21,74 @@ const firebaseConfig = {
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const auth = getAuth(app);
 const db = getFirestore(app, "theme-journal-database");
+
+
+export const createTheme = async (theme: Omit<Theme, 'id'>): Promise<string | null> => {
+    try {
+        const themesRef = collection(db, "themes");
+
+        // Check for overlapping themes
+        const q = query(themesRef, where("userId", "==", theme.userId));
+        const querySnapshot = await getDocs(q);
+        const existingThemes = querySnapshot.docs.map(doc => doc.data() as Theme);
+        
+        const newStart = new Date(theme.startDate);
+        const newEnd = new Date(theme.endDate);
+
+        const isOverlapping = existingThemes.some(existingTheme => {
+            const existingStart = new Date(existingTheme.startDate);
+            const existingEnd = new Date(existingTheme.endDate);
+            return (newStart <= existingEnd && newEnd >= existingStart);
+        });
+
+        if (isOverlapping) {
+            toast({
+                variant: 'destructive',
+                title: 'Overlapping Themes',
+                description: 'The selected date range overlaps with an existing theme.',
+            });
+            return null;
+        }
+
+        const docRef = await addDoc(themesRef, theme);
+        return docRef.id;
+    } catch (error) {
+        console.error("Error creating theme:", error);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Could not create the new theme. Please try again.',
+        });
+        return null;
+    }
+};
+
+export const deleteTheme = async (themeId: string): Promise<void> => {
+    try {
+        const batch = writeBatch(db);
+        const themeRef = doc(db, 'themes', themeId);
+        batch.delete(themeRef);
+        await batch.commit();
+    } catch (error) {
+        console.error('Error deleting theme:', error);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Could not delete the theme.',
+        });
+    }
+};
+
+export const getThemes = (userId: string, callback: (themes: Theme[]) => void) => {
+    const q = query(collection(db, "themes"), where("userId", "==", userId));
+    return onSnapshot(q, (querySnapshot) => {
+        const themes: Theme[] = [];
+        querySnapshot.forEach((doc) => {
+            themes.push({ id: doc.id, ...doc.data() } as Theme);
+        });
+        callback(themes);
+    });
+};
+
 
 export { app, auth, db };

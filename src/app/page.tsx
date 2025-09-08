@@ -1,108 +1,52 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import type { Note } from '@/lib/types';
-import { SidebarProvider, Sidebar, SidebarInset } from "@/components/ui/sidebar";
-import { NoteList } from '@/components/note-list';
-import { NoteEditor } from '@/components/note-editor';
+import type { Note, Theme } from '@/lib/types';
+import { SidebarProvider, Sidebar, SidebarInset, SidebarHeader, SidebarContent, SidebarFooter, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
+import { DailyNotes } from '@/components/daily-notes';
 import { Skeleton } from '@/components/ui/skeleton';
 import { UserProfile } from '@/components/user-profile';
 import { useAuth } from '@/hooks/use-auth';
-import { db } from '@/lib/firebase';
+import { db, getThemes } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp, onSnapshot, query, where, orderBy, doc, deleteDoc, updateDoc, Timestamp } from "firebase/firestore";
 import { encryptContent, decryptContent } from '@/lib/encryption';
+import { ThemeCalendar } from '@/components/theme-calendar';
+import { Button } from '@/components/ui/button';
+import { BookPlus } from 'lucide-react';
+import { ThemeManager } from '@/components/theme-manager';
+import { format } from 'date-fns';
 
 export default function Home() {
   const { user, loading: authLoading } = useAuth();
-  const [notes, setNotes] = useState<Note[]>([]);
-  const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
+  const [themes, setThemes] = useState<Theme[]>([]);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [isThemeManagerOpen, setIsThemeManagerOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load notes from Firestore
+  // Load themes from Firestore
   useEffect(() => {
     if (authLoading) {
       setIsLoading(true);
       return;
     }
     if (!user) {
-      setNotes([]);
-      setActiveNoteId(null);
+      setThemes([]);
       setIsLoading(false);
       return;
     }
 
     setIsLoading(true);
-    const q = query(collection(db, "notes"), where("userId", "==", user.uid), orderBy("lastModified", "desc"));
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const notesData: Note[] = [];
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        notesData.push({ 
-          id: doc.id, 
-          content: decryptContent(data.content, user.uid),
-          lastModified: (data.lastModified as Timestamp)?.toMillis() || Date.now(),
-          userId: data.userId
-        });
-      });
-      setNotes(notesData);
-      if (notesData.length > 0) {
-        if (!activeNoteId || !notesData.some(n => n.id === activeNoteId)) {
-          setActiveNoteId(notesData[0].id);
-        }
-      } else {
-        setActiveNoteId(null);
-      }
+    const unsubscribe = getThemes(user.uid, (themesData) => {
+      setThemes(themesData);
       setIsLoading(false);
-    }, (error) => {
-        console.error("Error loading notes from Firestore", error);
-        setIsLoading(false);
     });
 
     return () => unsubscribe();
-  }, [user, authLoading, activeNoteId]);
+  }, [user, authLoading]);
   
-  const handleNewNote = async () => {
-    if (!user) return;
-    try {
-        const encryptedContent = encryptContent('New Note', user.uid);
-        const docRef = await addDoc(collection(db, "notes"), {
-            content: encryptedContent,
-            lastModified: serverTimestamp(),
-            userId: user.uid
-        });
-        setActiveNoteId(docRef.id);
-    } catch (error) {
-        console.error("Error creating new note:", error);
-    }
+  const handleDayClick = (day: Date) => {
+    setSelectedDate(day);
   };
-  
-  const handleDeleteNote = async (id: string) => {
-    try {
-        await deleteDoc(doc(db, "notes", id));
-    } catch(error) {
-        console.error("Error deleting note:", error);
-    }
-  };
-  
-  const handleSelectNote = (id: string) => {
-    setActiveNoteId(id);
-  };
-  
-  const handleUpdateNote = async (id: string, content: string) => {
-    if (!user) return;
-    try {
-        const encryptedContent = encryptContent(content, user.uid);
-        const noteRef = doc(db, "notes", id);
-        await updateDoc(noteRef, {
-            content: encryptedContent,
-            lastModified: serverTimestamp()
-        });
-    } catch (error) {
-        console.error("Error updating note:", error);
-    }
-  };
-  
-  const activeNote = notes.find(note => note.id === activeNoteId) || null;
 
   return (
     <SidebarProvider>
@@ -110,27 +54,53 @@ export default function Home() {
         <UserProfile />
       </div>
       <Sidebar>
+        <SidebarHeader className="p-2">
+            <div className="flex items-center gap-2 p-2">
+                <h1 className="text-2xl font-headline font-bold">Theme Journal</h1>
+            </div>
+        </SidebarHeader>
         {(isLoading || authLoading) ? (
             <div className="p-4 space-y-2">
+                <Skeleton className="h-64 w-full" />
                 <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-16 w-full" />
-                <Skeleton className="h-16 w-full" />
-                <Skeleton className="h-16 w-full" />
             </div>
+        ) : user ? (
+            <>
+                <SidebarContent className="p-0">
+                    <ThemeCalendar 
+                        themes={themes}
+                        onDayClick={handleDayClick}
+                        selectedDate={selectedDate}
+                    />
+                </SidebarContent>
+                <SidebarFooter className="p-2">
+                    <Button onClick={() => setIsThemeManagerOpen(true)}>
+                        <BookPlus className="mr-2"/>
+                        Manage Themes
+                    </Button>
+                </SidebarFooter>
+            </>
         ) : (
-            <NoteList
-                notes={notes}
-                activeNoteId={activeNoteId}
-                onSelectNote={handleSelectNote}
-                onNewNote={handleNewNote}
-                onDeleteNote={handleDeleteNote}
-                disabled={!user}
-            />
+            <div className="p-4 text-center text-muted-foreground">
+                Please sign in to manage themes and notes.
+            </div>
         )}
       </Sidebar>
       <SidebarInset>
-        <NoteEditor activeNote={activeNote} onUpdateNote={handleUpdateNote} disabled={!user}/>
+        {user ? (
+            <DailyNotes 
+                key={format(selectedDate, 'yyyy-MM-dd')}
+                selectedDate={selectedDate} 
+                user={user} 
+            />
+        ) : (
+             <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-8 animate-fade-in">
+                <h2 className="text-2xl font-headline mb-2">Welcome to Theme Journal</h2>
+                <p>Please sign in to view and create notes.</p>
+            </div>
+        )}
       </SidebarInset>
+      {user && <ThemeManager isOpen={isThemeManagerOpen} onOpenChange={setIsThemeManagerOpen} user={user} existingThemes={themes} />}
     </SidebarProvider>
   );
 }

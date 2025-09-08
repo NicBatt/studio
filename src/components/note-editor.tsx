@@ -1,20 +1,22 @@
+
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
 import type { Note } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Save, Eye, Download, Code } from 'lucide-react';
+import { Save, Eye, Download, Code, FilePlus } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from '@/hooks/use-auth';
 
 type NoteEditorProps = {
   activeNote: Note | null;
   onUpdateNote: (id: string, content: string) => void;
+  onNewNote: () => void;
   disabled?: boolean;
 };
 
-export function NoteEditor({ activeNote, onUpdateNote, disabled = false }: NoteEditorProps) {
+export function NoteEditor({ activeNote, onUpdateNote, onNewNote, disabled = false }: NoteEditorProps) {
   const [content, setContent] = useState('');
   const [isPreview, setIsPreview] = useState(false);
   const { toast } = useToast();
@@ -30,7 +32,7 @@ export function NoteEditor({ activeNote, onUpdateNote, disabled = false }: NoteE
   }, [activeNote]);
 
   const handleSave = () => {
-    if (!activeNote || disabled) return;
+    if (!activeNote) return;
     onUpdateNote(activeNote.id, content);
     toast({
       title: "Note Saved!",
@@ -39,7 +41,7 @@ export function NoteEditor({ activeNote, onUpdateNote, disabled = false }: NoteE
   };
 
   const handleExport = () => {
-    if (!activeNote || disabled) return;
+    if (!activeNote) return;
     try {
         const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
         const url = URL.createObjectURL(blob);
@@ -68,8 +70,12 @@ export function NoteEditor({ activeNote, onUpdateNote, disabled = false }: NoteE
   if (disabled || !user) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-8 animate-fade-in">
-        <h2 className="text-2xl font-headline mb-2">Welcome to Theme Journal</h2>
-        <p>Please sign in to create and edit notes.</p>
+        <h2 className="text-2xl font-headline mb-4">No notes for this day</h2>
+        <p className="mb-4">Select a different day or create a new note to begin.</p>
+        <Button onClick={onNewNote}>
+            <FilePlus className="mr-2" />
+            Create Note
+        </Button>
       </div>
     );
   }
@@ -78,7 +84,7 @@ export function NoteEditor({ activeNote, onUpdateNote, disabled = false }: NoteE
     return (
       <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-8 animate-fade-in">
         <h2 className="text-2xl font-headline mb-2">Select a note</h2>
-        <p>Select a note from the sidebar or create a new one to get started.</p>
+        <p>Select a note from the list or create a new one.</p>
       </div>
     );
   }
@@ -100,18 +106,17 @@ export function NoteEditor({ activeNote, onUpdateNote, disabled = false }: NoteE
             placeholder="Start writing..."
             className="w-full h-full p-6 text-base resize-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent"
             aria-label="Note content"
-            disabled={disabled}
           />
         )}
       </main>
        <div className="absolute bottom-4 right-4 flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={handleSave} aria-label="Save note" disabled={disabled} className="bg-card hover:bg-accent rounded-full shadow-lg h-12 w-12">
+          <Button variant="ghost" size="icon" onClick={handleSave} aria-label="Save note" className="bg-card hover:bg-accent rounded-full shadow-lg h-12 w-12">
             <Save />
           </Button>
-          <Button variant="ghost" size="icon" onClick={() => setIsPreview(!isPreview)} aria-label={isPreview ? "Show editor" : "Show preview"} disabled={disabled} className="bg-card hover:bg-accent rounded-full shadow-lg h-12 w-12">
+          <Button variant="ghost" size="icon" onClick={() => setIsPreview(!isPreview)} aria-label={isPreview ? "Show editor" : "Show preview"} className="bg-card hover:bg-accent rounded-full shadow-lg h-12 w-12">
             {isPreview ? <Code /> : <Eye />}
           </Button>
-          <Button variant="ghost" size="icon" onClick={handleExport} aria-label="Export note" disabled={disabled} className="bg-card hover:bg-accent rounded-full shadow-lg h-12 w-12">
+          <Button variant="ghost" size="icon" onClick={handleExport} aria-label="Export note" className="bg-card hover:bg-accent rounded-full shadow-lg h-12 w-12">
             <Download />
           </Button>
         </div>
