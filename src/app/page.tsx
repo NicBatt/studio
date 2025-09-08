@@ -8,7 +8,7 @@ import { DailyNotes } from '@/components/daily-notes';
 import { Skeleton } from '@/components/ui/skeleton';
 import { UserProfile } from '@/components/user-profile';
 import { useAuth } from '@/hooks/use-auth';
-import { db, getThemes } from '@/lib/firebase';
+import { db, getThemes, getTasks } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp, onSnapshot, query, where, orderBy, doc, deleteDoc, updateDoc, Timestamp } from "firebase/firestore";
 import { decryptContent, encryptContent } from '@/lib/encryption';
 import { ThemeCalendar } from '@/components/theme-calendar';
@@ -40,7 +40,7 @@ export default function Home() {
     return selectedDate >= start && selectedDate <= end;
   });
 
-  // Load themes from Firestore
+  // Load themes and tasks from Firestore
   useEffect(() => {
     if (authLoading) {
       setIsLoading(true);
@@ -48,17 +48,26 @@ export default function Home() {
     }
     if (!user) {
       setThemes([]);
+      setTasks([]);
       setIsLoading(false);
       return;
     }
 
     setIsLoading(true);
-    const unsubscribe = getThemes(user.uid, (themesData) => {
+    const unsubscribeThemes = getThemes(user.uid, (themesData) => {
       setThemes(themesData);
       setIsLoading(false);
     });
 
-    return () => unsubscribe();
+    const unsubscribeTasks = getTasks(user.uid, (tasksData) => {
+        setTasks(tasksData);
+    });
+
+
+    return () => {
+        unsubscribeThemes();
+        unsubscribeTasks();
+    };
   }, [user, authLoading]);
 
   // Load notes for the selected date

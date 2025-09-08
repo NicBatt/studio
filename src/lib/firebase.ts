@@ -2,7 +2,7 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs, onSnapshot, writeBatch, doc, updateDoc } from "firebase/firestore";
+import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs, onSnapshot, writeBatch, doc, updateDoc, deleteDoc as deleteDocFirestore } from "firebase/firestore";
 import type { Theme, Task } from '@/lib/types';
 import { toast } from "@/hooks/use-toast";
 import { encryptContent, decryptContent } from "./encryption";
@@ -57,6 +57,7 @@ export const createTheme = async (theme: Omit<Theme, 'id'>): Promise<string | nu
             label: encryptContent(theme.label, theme.userId),
             description: theme.description ? encryptContent(theme.description, theme.userId) : ''
         });
+        toast({ title: 'Theme Created!', description: `Theme "${theme.label}" was saved.`});
         return docRef.id;
     } catch (error) {
         console.error("Error creating theme:", error);
@@ -77,6 +78,7 @@ export const updateTheme = async (theme: Theme): Promise<void> => {
             label: encryptContent(theme.label, theme.userId),
             description: theme.description ? encryptContent(theme.description, theme.userId) : ''
         });
+        toast({ title: 'Theme Updated!', description: `Theme "${theme.label}" was saved.`});
     } catch (error) {
         console.error('Error updating theme:', error);
         toast({
@@ -90,10 +92,8 @@ export const updateTheme = async (theme: Theme): Promise<void> => {
 
 export const deleteTheme = async (themeId: string): Promise<void> => {
     try {
-        const batch = writeBatch(db);
-        const themeRef = doc(db, 'themes', themeId);
-        batch.delete(themeRef);
-        await batch.commit();
+        await deleteDocFirestore(doc(db, 'themes', themeId));
+        toast({ title: 'Theme Deleted' });
     } catch (error) {
         console.error('Error deleting theme:', error);
         toast({
@@ -122,23 +122,58 @@ export const getThemes = (userId: string, callback: (themes: Theme[]) => void) =
 };
 
 export const createTask = async (task: Omit<Task, 'id'>): Promise<string | null> => {
-    // Placeholder for creating a task
-    console.log("Creating task", task);
-    return null;
-}
+    try {
+        const tasksRef = collection(db, "tasks");
+        const docRef = await addDoc(tasksRef, {
+            ...task,
+            label: encryptContent(task.label, task.userId)
+        });
+        toast({ title: 'Task Created!', description: `Task "${task.label}" was saved.`});
+        return docRef.id;
+    } catch (error) {
+        console.error("Error creating task:", error);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Could not create the new task. Please try again.',
+        });
+        return null;
+    }
+};
 
 export const updateTask = async (task: Task): Promise<void> => {
-    // Placeholder for updating a task
-    console.log("Updating task", task);
-}
+    try {
+        const taskRef = doc(db, 'tasks', task.id);
+        await updateDoc(taskRef, {
+            ...task,
+            label: encryptContent(task.label, task.userId)
+        });
+        toast({ title: 'Task Updated!', description: `Task "${task.label}" was saved.`});
+    } catch (error) {
+        console.error('Error updating task:', error);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Could not update the task.',
+        });
+    }
+};
 
 export const deleteTask = async (taskId: string): Promise<void> => {
-    // Placeholder for deleting a task
-    console.log("Deleting task", taskId);
-}
+    try {
+        await deleteDocFirestore(doc(db, 'tasks', taskId));
+        toast({ title: 'Task Deleted' });
+    } catch (error) {
+        console.error('Error deleting task:', error);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Could not delete the task.',
+        });
+    }
+};
 
 export const getTasks = (userId: string, callback: (tasks: Task[]) => void) => {
-    // Placeholder for getting tasks
     const q = query(collection(db, "tasks"), where("userId", "==", userId));
     return onSnapshot(q, (querySnapshot) => {
         const tasks: Task[] = [];
