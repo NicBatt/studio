@@ -1,9 +1,11 @@
+
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs, onSnapshot, writeBatch } from "firebase/firestore";
+import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs, onSnapshot, writeBatch, doc } from "firebase/firestore";
 import type { Theme } from '@/lib/types';
 import { toast } from "@/hooks/use-toast";
+import { decryptContent } from "./encryption";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -84,7 +86,13 @@ export const getThemes = (userId: string, callback: (themes: Theme[]) => void) =
     return onSnapshot(q, (querySnapshot) => {
         const themes: Theme[] = [];
         querySnapshot.forEach((doc) => {
-            themes.push({ id: doc.id, ...doc.data() } as Theme);
+            const themeData = doc.data() as Omit<Theme, 'id'>;
+            themes.push({ 
+                id: doc.id, 
+                ...themeData,
+                label: decryptContent(themeData.label, userId),
+                description: themeData.description ? decryptContent(themeData.description, userId) : undefined
+            });
         });
         callback(themes);
     });

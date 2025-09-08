@@ -3,38 +3,31 @@
 
 import type { Note } from '@/lib/types';
 import {
-  SidebarHeader,
-  SidebarContent,
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarMenuAction,
 } from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
-import { FilePlus, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Timestamp } from 'firebase/firestore';
 
-type NoteListProps = {
+type NoteListDailyProps = {
   notes: Note[];
   activeNoteId: string | null;
   selectedDate: Date;
   onSelectNote: (id: string) => void;
-  onNewNote: () => void;
   onDeleteNote: (id: string) => void;
 };
 
-export function NoteList({ notes, activeNoteId, selectedDate, onSelectNote, onNewNote, onDeleteNote }: NoteListProps) {
+export function NoteListDaily({ notes, activeNoteId, selectedDate, onSelectNote, onDeleteNote }: NoteListDailyProps) {
     
   return (
     <div className="flex flex-col h-full">
       <header className="p-4 border-b">
         <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">{format(selectedDate, "MMMM d, yyyy")}</h2>
-            <Button variant="ghost" size="icon" onClick={onNewNote} aria-label="New Note">
-                <FilePlus />
-            </Button>
         </div>
       </header>
       <div className="flex-grow overflow-y-auto">

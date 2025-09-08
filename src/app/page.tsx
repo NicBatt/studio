@@ -1,27 +1,33 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
 import type { Note, Theme } from '@/lib/types';
-import { SidebarProvider, Sidebar, SidebarInset, SidebarHeader, SidebarContent, SidebarFooter, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
+import { SidebarProvider, Sidebar, SidebarInset, SidebarHeader, SidebarContent, SidebarFooter } from "@/components/ui/sidebar";
 import { DailyNotes } from '@/components/daily-notes';
 import { Skeleton } from '@/components/ui/skeleton';
 import { UserProfile } from '@/components/user-profile';
 import { useAuth } from '@/hooks/use-auth';
 import { db, getThemes } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp, onSnapshot, query, where, orderBy, doc, deleteDoc, updateDoc, Timestamp } from "firebase/firestore";
-import { encryptContent, decryptContent } from '@/lib/encryption';
+import { decryptContent } from '@/lib/encryption';
 import { ThemeCalendar } from '@/components/theme-calendar';
 import { Button } from '@/components/ui/button';
-import { BookPlus } from 'lucide-react';
+import { BookPlus, FilePlus } from 'lucide-react';
 import { ThemeManager } from '@/components/theme-manager';
 import { format } from 'date-fns';
+import { NoteListDaily } from '@/components/note-list-daily';
 
 export default function Home() {
   const { user, loading: authLoading } = useAuth();
   const [themes, setThemes] = useState<Theme[]>([]);
+  const [notes, setNotes] = useState<Note[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
   const [isThemeManagerOpen, setIsThemeManagerOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+
+  const formattedDate = format(selectedDate, 'yyyy-MM-dd');
 
   // Load themes from Firestore
   useEffect(() => {
@@ -43,10 +49,81 @@ export default function Home() {
 
     return () => unsubscribe();
   }, [user, authLoading]);
+
+  // Load notes for the selected date
+  useEffect(() => {
+      if (!user) {
+        setNotes([]);
+        return;
+      }
+      const q = query(
+          collection(db, "notes"),
+          where("userId", "==", user.uid),
+          where("date", "==", formattedDate),
+          orderBy("lastModified", "desc")
+      );
+
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+          const notesData: Note[] = [];
+          querySnapshot.forEach((doc) => {
+              const data = doc.data();
+              notesData.push({
+                  id: doc.id,
+                  content: decryptContent(data.content, user.uid),
+                  lastModified: (data.lastModified as Timestamp)?.toMillis() || Date.now(),
+                  userId: data.userId,
+                  date: data.date,
+              });
+          });
+          setNotes(notesData);
+          if (notesData.length > 0) {
+               if (!activeNoteId || !notesData.some(n => n.id === activeNoteId)) {
+                  setActiveNoteId(notesData[0].id);
+              }
+          } else {
+              setActiveNoteId(null);
+          }
+      }, (error) => {
+          console.error("Error loading daily notes:", error);
+      });
+
+      return () => unsubscribe();
+  }, [formattedDate, user, activeNoteId]);
+
   
   const handleDayClick = (day: Date) => {
     setSelectedDate(day);
+    setActiveNoteId(null);
   };
+
+  const handleNewNote = async () => {
+        if (!user) return;
+        try {
+            const encryptedContent = encryptContent('New Note', user.uid);
+            const docRef = await addDoc(collection(db, "notes"), {
+                content: encryptedContent,
+                lastModified: serverTimestamp(),
+                userId: user.uid,
+                date: formattedDate,
+            });
+            setActiveNoteId(docRef.id);
+        } catch (error) {
+            console.error("Error creating new note:", error);
+        }
+    };
+
+    const handleDeleteNote = async (id: string) => {
+        try {
+            await deleteDoc(doc(db, "notes", id));
+            if (activeNoteId === id) {
+                 const remainingNotes = notes.filter(n => n.id !== id);
+                 setActiveNoteId(remainingNotes.length > 0 ? remainingNotes[0].id : null);
+            }
+        } catch (error) {
+            console.error("Error deleting note:", error);
+        }
+    };
+
 
   return (
     <SidebarProvider>
@@ -66,15 +143,30 @@ export default function Home() {
             </div>
         ) : user ? (
             <>
-                <SidebarContent className="p-0">
+                <SidebarContent className="p-0 flex flex-col">
                     <ThemeCalendar 
                         themes={themes}
                         onDayClick={handleDayClick}
                         selectedDate={selectedDate}
                     />
+                    <div className="flex-grow border-t mt-2">
+                      <NoteListDaily
+                          notes={notes}
+                          activeNoteId={activeNoteId}
+                          onSelectNote={setActiveNoteId}
+                          onDeleteNote={handleDeleteNote}
+                          selectedDate={selectedDate}
+                      />
+                    </div>
+                     <div className='p-2 border-t'>
+                        <Button onClick={handleNewNote} className="w-full">
+                            <FilePlus className="mr-2"/>
+                            New Note
+                        </Button>
+                    </div>
                 </SidebarContent>
                 <SidebarFooter className="p-2">
-                    <Button onClick={() => setIsThemeManagerOpen(true)}>
+                    <Button onClick={() => setIsThemeManagerOpen(true)} className="w-full">
                         <BookPlus className="mr-2"/>
                         Manage Themes
                     </Button>
@@ -87,18 +179,14 @@ export default function Home() {
         )}
       </Sidebar>
       <SidebarInset>
-        {user ? (
-            <DailyNotes 
-                key={format(selectedDate, 'yyyy-MM-dd')}
-                selectedDate={selectedDate} 
-                user={user} 
-            />
-        ) : (
-             <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-8 animate-fade-in">
-                <h2 className="text-2xl font-headline mb-2">Welcome to Theme Journal</h2>
-                <p>Please sign in to view and create notes.</p>
-            </div>
-        )}
+        <DailyNotes 
+            key={format(selectedDate, 'yyyy-MM-dd') + '-' + activeNoteId}
+            selectedDate={selectedDate} 
+            user={user}
+            notes={notes}
+            activeNoteId={activeNoteId}
+            onNewNote={handleNewNote}
+        />
       </SidebarInset>
       {user && <ThemeManager isOpen={isThemeManagerOpen} onOpenChange={setIsThemeManagerOpen} user={user} existingThemes={themes} />}
     </SidebarProvider>

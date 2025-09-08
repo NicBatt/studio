@@ -17,7 +17,7 @@ import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar as CalendarIcon, Trash2 } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
-import { addDays, format } from 'date-fns';
+import { addDays, format, parseISO } from 'date-fns';
 import { DateRange } from 'react-day-picker';
 import { CirclePicker } from 'react-color';
 import { createTheme, deleteTheme } from '@/lib/firebase';
@@ -33,6 +33,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { encryptContent, decryptContent } from '@/lib/encryption';
+
 
 interface ThemeManagerProps {
   isOpen: boolean;
@@ -59,8 +61,8 @@ export function ThemeManager({ isOpen, onOpenChange, user, existingThemes }: The
     
     await createTheme({
       userId: user.uid,
-      label,
-      description,
+      label: encryptContent(label, user.uid),
+      description: encryptContent(description, user.uid),
       color,
       startDate: format(dateRange.from, 'yyyy-MM-dd'),
       endDate: format(dateRange.to, 'yyyy-MM-dd'),
@@ -77,9 +79,18 @@ export function ThemeManager({ isOpen, onOpenChange, user, existingThemes }: The
   const handleDeleteTheme = async (themeId: string) => {
     await deleteTheme(themeId);
   }
+  
+  const decryptedLabel = (encryptedLabel: string) => {
+      return decryptContent(encryptedLabel, user.uid);
+  }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+        onOpenChange(open);
+        if (!open) {
+            setIsCreating(false); // Reset view when closing dialog
+        }
+    }}>
       <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Manage Themes</DialogTitle>
@@ -170,8 +181,8 @@ export function ThemeManager({ isOpen, onOpenChange, user, existingThemes }: The
                            <div className="flex items-center gap-3">
                              <div className="w-4 h-4 rounded-full" style={{backgroundColor: theme.color}}></div>
                              <div>
-                                 <p className="font-medium">{theme.label}</p>
-                                 <p className="text-sm text-muted-foreground">{format(new Date(theme.startDate), 'MMM d')} - {format(new Date(theme.endDate), 'MMM d, yyyy')}</p>
+                                 <p className="font-medium">{decryptedLabel(theme.label)}</p>
+                                 <p className="text-sm text-muted-foreground">{format(parseISO(theme.startDate), 'MMM d')} - {format(parseISO(theme.endDate), 'MMM d, yyyy')}</p>
                              </div>
                            </div>
                            <AlertDialog>
@@ -184,7 +195,7 @@ export function ThemeManager({ isOpen, onOpenChange, user, existingThemes }: The
                                     <AlertDialogHeader>
                                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                         <AlertDialogDescription>
-                                            This will permanently delete the theme "{theme.label}". This action cannot be undone.
+                                            This will permanently delete the theme "{decryptedLabel(theme.label)}". This action cannot be undone.
                                         </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
