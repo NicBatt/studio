@@ -49,10 +49,17 @@ export function DailyNotes({ selectedDate, user, notes, activeNoteId, activeThem
             </div>
         )
     }
+    
+    const getMutedColor = (hex: string) => {
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        return `rgba(${r}, ${g}, ${b}, 0.2)`;
+    };
 
     return (
         <div className="h-full flex flex-col">
-            <header className="p-4 border-b flex items-center gap-4" style={{ backgroundColor: activeTheme ? activeTheme.color : 'transparent' }}>
+            <header className="p-4 border-b flex items-center gap-4" style={{ backgroundColor: activeTheme ? getMutedColor(activeTheme.color) : 'transparent' }}>
                 {trigger}
                 <div className="flex items-center gap-3">
                     <h1 className="text-2xl font-bold font-headline">{format(selectedDate, "MMMM d, yyyy")}</h1>
