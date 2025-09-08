@@ -51,13 +51,13 @@ export function DailyNotes({ selectedDate, user, notes, activeNoteId, activeThem
         )
     }
 
-    const headerStyle = activeTheme 
-        ? { background: `linear-gradient(to bottom, ${hexToRgba(activeTheme.color, 0.2)}, transparent)` }
+    const containerStyle = activeTheme 
+        ? { background: `linear-gradient(to top, ${hexToRgba(activeTheme.color, 0.2)}, transparent)` }
         : { backgroundColor: 'transparent' };
 
     return (
-        <div className="h-full flex flex-col">
-            <header className="p-4 border-b flex items-center gap-4" style={headerStyle}>
+        <div className="h-full flex flex-col" style={containerStyle}>
+            <header className="p-4 border-b flex items-center gap-4">
                 {trigger}
                 <div className="flex items-center gap-3">
                     <h1 className="text-2xl font-bold font-headline">{format(selectedDate, "MMMM d, yyyy")}</h1>
