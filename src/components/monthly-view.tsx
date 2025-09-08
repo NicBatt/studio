@@ -27,13 +27,6 @@ export function MonthlyView({ allTasks, allProgress, onProgressChange, uniqueTas
     return eachDayOfInterval({ start, end });
   }, [currentMonth]);
 
-  const dailyTasks = useMemo(() => {
-      return monthDates.map(date => ({
-          date,
-          tasks: allTasks.filter(task => isTaskForDate(task, date))
-      }));
-  }, [monthDates, allTasks]);
-
   const goToNextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
   const goToPreviousMonth = () => setCurrentMonth(subMonths(currentMonth, 1));
 
@@ -66,9 +59,6 @@ export function MonthlyView({ allTasks, allProgress, onProgressChange, uniqueTas
                     </thead>
                     <tbody>
                         {uniqueTasks.map(task => {
-                             const isTaskVisibleForMonth = dailyTasks.some(day => day.tasks.some(t => t.id === task.id));
-                             if (!isTaskVisibleForMonth) return null;
-
                             return (
                                 <tr key={task.id} className="border-b">
                                     <td className="sticky left-0 bg-background/95 backdrop-blur-sm z-10 p-2 font-medium w-1/3 md:w-1/4 align-top">
@@ -76,9 +66,7 @@ export function MonthlyView({ allTasks, allProgress, onProgressChange, uniqueTas
                                     </td>
                                     {monthDates.map(date => {
                                         const dateKey = format(date, 'yyyy-MM-dd');
-                                        const isVisible = dailyTasks
-                                            .find(d => isSameDay(d.date, date))
-                                            ?.tasks.some(t => t.id === task.id);
+                                        const isVisible = isTaskForDate(task, date);
 
                                         if (!isVisible) {
                                             return <td key={dateKey} className="p-2 align-middle text-center w-20"></td>;
