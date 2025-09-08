@@ -32,6 +32,10 @@ export function NoteEditor({ activeNote, onUpdateNote, disabled = false }: NoteE
   const handleSave = () => {
     if (!activeNote || disabled) return;
     onUpdateNote(activeNote.id, content);
+    toast({
+      title: "Note Saved!",
+      description: "Your note has been saved successfully.",
+    });
   };
 
   const handleExport = () => {

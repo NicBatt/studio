@@ -10,6 +10,7 @@ import { UserProfile } from '@/components/user-profile';
 import { useAuth } from '@/hooks/use-auth';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp, onSnapshot, query, where, orderBy, doc, deleteDoc, updateDoc, Timestamp } from "firebase/firestore";
+import { encryptContent, decryptContent } from '@/lib/encryption';
 
 export default function Home() {
   const { user, loading: authLoading } = useAuth();
@@ -38,7 +39,7 @@ export default function Home() {
         const data = doc.data();
         notesData.push({ 
           id: doc.id, 
-          content: data.content,
+          content: decryptContent(data.content, user.uid),
           lastModified: (data.lastModified as Timestamp)?.toMillis() || Date.now(),
           userId: data.userId
         });
@@ -63,8 +64,9 @@ export default function Home() {
   const handleNewNote = async () => {
     if (!user) return;
     try {
+        const encryptedContent = encryptContent('New Note', user.uid);
         const docRef = await addDoc(collection(db, "notes"), {
-            content: 'New Note',
+            content: encryptedContent,
             lastModified: serverTimestamp(),
             userId: user.uid
         });
@@ -87,10 +89,12 @@ export default function Home() {
   };
   
   const handleUpdateNote = async (id: string, content: string) => {
+    if (!user) return;
     try {
+        const encryptedContent = encryptContent(content, user.uid);
         const noteRef = doc(db, "notes", id);
         await updateDoc(noteRef, {
-            content: content,
+            content: encryptedContent,
             lastModified: serverTimestamp()
         });
     } catch (error) {
