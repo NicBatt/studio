@@ -6,44 +6,75 @@ import { SidebarProvider, Sidebar, SidebarInset } from "@/components/ui/sidebar"
 import { NoteList } from '@/components/note-list';
 import { NoteEditor } from '@/components/note-editor';
 import { Skeleton } from '@/components/ui/skeleton';
+import { UserProfile } from '@/components/user-profile';
+import { useAuth } from '@/hooks/use-auth';
 
-const LOCAL_STORAGE_KEY = 'theme-journal-notes';
+const LOCAL_STORAGE_KEY_PREFIX = 'theme-journal-notes';
 
 export default function Home() {
+  const { user, loading: authLoading } = useAuth();
   const [notes, setNotes] = useState<Note[]>([]);
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load notes from localStorage on initial client render
+  const getLocalStorageKey = () => {
+    return user ? `${LOCAL_STORAGE_KEY_PREFIX}-${user.uid}` : null;
+  };
+  
+  // Load notes from localStorage on initial client render or when user changes
   useEffect(() => {
+    if (authLoading) return;
+    setIsLoading(true);
+    const storageKey = getLocalStorageKey();
+
+    // When user logs out, clear the notes
+    if (!storageKey) {
+        setNotes([]);
+        setActiveNoteId(null);
+        setIsLoading(false);
+        return;
+    }
+
     try {
-      const savedNotes = localStorage.getItem(LOCAL_STORAGE_KEY);
+      const savedNotes = localStorage.getItem(storageKey);
       if (savedNotes) {
         const parsedNotes: Note[] = JSON.parse(savedNotes);
-        setNotes(parsedNotes.sort((a, b) => b.lastModified - a.lastModified));
-        if (parsedNotes.length > 0) {
-          setActiveNoteId(parsedNotes[0].id);
+        const sortedNotes = parsedNotes.sort((a, b) => b.lastModified - a.lastModified);
+        setNotes(sortedNotes);
+        if (sortedNotes.length > 0) {
+          setActiveNoteId(sortedNotes[0].id);
+        } else {
+          setActiveNoteId(null);
         }
+      } else {
+        setNotes([]);
+        setActiveNoteId(null);
       }
     } catch (error) {
       console.error("Failed to load notes from local storage", error);
+      setNotes([]);
+      setActiveNoteId(null);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [user, authLoading]);
 
   // Save notes to localStorage whenever they change
   useEffect(() => {
-    if (!isLoading) {
-      try {
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(notes));
-      } catch (error) {
-        console.error("Failed to save notes to local storage", error);
+    if (!isLoading && !authLoading) {
+      const storageKey = getLocalStorageKey();
+      if (storageKey) {
+        try {
+          localStorage.setItem(storageKey, JSON.stringify(notes));
+        } catch (error) {
+          console.error("Failed to save notes to local storage", error);
+        }
       }
     }
-  }, [notes, isLoading]);
+  }, [notes, isLoading, authLoading, user]);
   
   const handleNewNote = () => {
+    if (!user) return;
     const newNote: Note = {
       id: crypto.randomUUID(),
       content: 'New Note',
@@ -78,8 +109,11 @@ export default function Home() {
 
   return (
     <SidebarProvider>
+      <div className="absolute top-4 right-4 z-20">
+        <UserProfile />
+      </div>
       <Sidebar>
-        {isLoading ? (
+        {(isLoading || authLoading) ? (
             <div className="p-4 space-y-2">
                 <Skeleton className="h-10 w-full" />
                 <Skeleton className="h-16 w-full" />
@@ -93,11 +127,12 @@ export default function Home() {
                 onSelectNote={handleSelectNote}
                 onNewNote={handleNewNote}
                 onDeleteNote={handleDeleteNote}
+                disabled={!user}
             />
         )}
       </Sidebar>
       <SidebarInset>
-        <NoteEditor activeNote={activeNote} onUpdateNote={handleUpdateNote} />
+        <NoteEditor activeNote={activeNote} onUpdateNote={handleUpdateNote} disabled={!user}/>
       </SidebarInset>
     </SidebarProvider>
   );

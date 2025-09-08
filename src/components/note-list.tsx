@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { FilePlus, Trash2, BookText } from "lucide-react";
 import { formatDistanceToNow } from "date-fns/formatDistanceToNow";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { useAuth } from '@/hooks/use-auth';
 
 type NoteListProps = {
   notes: Note[];
@@ -20,9 +21,12 @@ type NoteListProps = {
   onSelectNote: (id: string) => void;
   onNewNote: () => void;
   onDeleteNote: (id: string) => void;
+  disabled?: boolean;
 };
 
-export function NoteList({ notes, activeNoteId, onSelectNote, onNewNote, onDeleteNote }: NoteListProps) {
+export function NoteList({ notes, activeNoteId, onSelectNote, onNewNote, onDeleteNote, disabled = false }: NoteListProps) {
+  const { user } = useAuth();
+    
   return (
     <>
       <SidebarHeader className="flex items-center justify-between">
@@ -30,7 +34,7 @@ export function NoteList({ notes, activeNoteId, onSelectNote, onNewNote, onDelet
             <BookText className="size-6 text-primary" />
             <h2 className="text-xl font-headline font-bold">Theme Journal</h2>
         </div>
-        <Button variant="ghost" size="icon" onClick={onNewNote} aria-label="New Note">
+        <Button variant="ghost" size="icon" onClick={onNewNote} aria-label="New Note" disabled={disabled}>
           <FilePlus />
         </Button>
       </SidebarHeader>
@@ -45,6 +49,7 @@ export function NoteList({ notes, activeNoteId, onSelectNote, onNewNote, onDelet
                     onClick={() => onSelectNote(note.id)}
                     isActive={note.id === activeNoteId}
                     className="h-auto py-2 flex-col items-start"
+                    disabled={disabled}
                   >
                     <span className="font-semibold text-sm truncate w-full">{title}</span>
                     <span className="text-xs text-muted-foreground">
@@ -53,7 +58,7 @@ export function NoteList({ notes, activeNoteId, onSelectNote, onNewNote, onDelet
                   </SidebarMenuButton>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
-                        <SidebarMenuAction showOnHover>
+                        <SidebarMenuAction showOnHover disabled={disabled}>
                             <Trash2 className="size-4" />
                         </SidebarMenuAction>
                     </AlertDialogTrigger>
@@ -75,7 +80,7 @@ export function NoteList({ notes, activeNoteId, onSelectNote, onNewNote, onDelet
             })
           ) : (
             <div className="p-4 text-center text-sm text-muted-foreground">
-              No notes yet. Create one!
+              {user ? "No notes yet. Create one!" : "Please sign in."}
             </div>
           )}
         </SidebarMenu>

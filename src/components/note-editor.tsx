@@ -6,16 +6,19 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Save, Eye, Download, Code } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from '@/hooks/use-auth';
 
 type NoteEditorProps = {
   activeNote: Note | null;
   onUpdateNote: (id: string, content: string) => void;
+  disabled?: boolean;
 };
 
-export function NoteEditor({ activeNote, onUpdateNote }: NoteEditorProps) {
+export function NoteEditor({ activeNote, onUpdateNote, disabled = false }: NoteEditorProps) {
   const [content, setContent] = useState('');
   const [isPreview, setIsPreview] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
     if (activeNote) {
@@ -27,12 +30,12 @@ export function NoteEditor({ activeNote, onUpdateNote }: NoteEditorProps) {
   }, [activeNote]);
 
   const handleSave = () => {
-    if (!activeNote) return;
+    if (!activeNote || disabled) return;
     onUpdateNote(activeNote.id, content);
   };
 
   const handleExport = () => {
-    if (!activeNote) return;
+    if (!activeNote || disabled) return;
     try {
         const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
         const url = URL.createObjectURL(blob);
@@ -58,10 +61,19 @@ export function NoteEditor({ activeNote, onUpdateNote }: NoteEditorProps) {
     return content.split('\n')[0].trim() || 'Untitled Note';
   }, [activeNote, content]);
 
-  if (!activeNote) {
+  if (disabled || !user) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-8 animate-fade-in">
         <h2 className="text-2xl font-headline mb-2">Welcome to Theme Journal</h2>
+        <p>Please sign in to create and edit notes.</p>
+      </div>
+    );
+  }
+  
+  if (!activeNote) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-8 animate-fade-in">
+        <h2 className="text-2xl font-headline mb-2">Select a note</h2>
         <p>Select a note from the sidebar or create a new one to get started.</p>
       </div>
     );
@@ -72,13 +84,13 @@ export function NoteEditor({ activeNote, onUpdateNote }: NoteEditorProps) {
       <header className="flex items-center justify-between p-4 border-b shrink-0">
         <h1 className="text-xl font-headline truncate pr-4">{noteTitle}</h1>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={handleSave} aria-label="Save note">
+          <Button variant="ghost" size="icon" onClick={handleSave} aria-label="Save note" disabled={disabled}>
             <Save />
           </Button>
-          <Button variant="ghost" size="icon" onClick={() => setIsPreview(!isPreview)} aria-label={isPreview ? "Show editor" : "Show preview"}>
+          <Button variant="ghost" size="icon" onClick={() => setIsPreview(!isPreview)} aria-label={isPreview ? "Show editor" : "Show preview"} disabled={disabled}>
             {isPreview ? <Code /> : <Eye />}
           </Button>
-          <Button variant="ghost" size="icon" onClick={handleExport} aria-label="Export note">
+          <Button variant="ghost" size="icon" onClick={handleExport} aria-label="Export note" disabled={disabled}>
             <Download />
           </Button>
         </div>
@@ -95,6 +107,7 @@ export function NoteEditor({ activeNote, onUpdateNote }: NoteEditorProps) {
             placeholder="Start writing..."
             className="w-full h-full p-6 text-base resize-none border-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent"
             aria-label="Note content"
+            disabled={disabled}
           />
         )}
       </main>
