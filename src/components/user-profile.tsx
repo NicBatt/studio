@@ -10,11 +10,18 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuPortal,
+  DropdownMenuSubContent
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "./ui/skeleton";
+import { useTheme } from "next-themes";
+import { Sun, Moon, Laptop } from "lucide-react";
 
 function UserProfile() {
   const { user, loading, signInWithGoogle, logout } = useAuth();
+  const { setTheme } = useTheme();
 
   if (loading) {
     return <Skeleton className="h-10 w-32" />;
@@ -50,6 +57,28 @@ function UserProfile() {
             </p>
           </div>
         </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuSub>
+            <DropdownMenuSubTrigger>
+                <span>Appearance</span>
+            </DropdownMenuSubTrigger>
+            <DropdownMenuPortal>
+                <DropdownMenuSubContent>
+                    <DropdownMenuItem onClick={() => setTheme("light")}>
+                        <Sun className="mr-2" />
+                        Light
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setTheme("dark")}>
+                        <Moon className="mr-2" />
+                        Dark
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setTheme("system")}>
+                        <Laptop className="mr-2" />
+                        System
+                    </DropdownMenuItem>
+                </DropdownMenuSubContent>
+            </DropdownMenuPortal>
+        </DropdownMenuSub>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={logout}>
           Log out
