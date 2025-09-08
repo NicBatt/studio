@@ -3,7 +3,7 @@
 
 import { TaskProgress } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { Circle, ChevronsRight } from "lucide-react";
+import { Circle } from "lucide-react";
 
 interface ProgressCircleProps {
     progress: TaskProgress;
@@ -11,6 +11,24 @@ interface ProgressCircleProps {
 }
 
 const progressStates: TaskProgress[] = ['none', 'half', 'full'];
+
+const HalfCircle = () => (
+    <svg 
+        width="24" 
+        height="24" 
+        viewBox="0 0 24 24" 
+        fill="none" 
+        stroke="currentColor" 
+        strokeWidth="2" 
+        strokeLinecap="round" 
+        strokeLinejoin="round" 
+        className="text-green-500"
+    >
+        <circle cx="12" cy="12" r="10"></circle>
+        <path d="M12 2v20" style={{ strokeWidth: 0, fill: 'currentColor' }} />
+    </svg>
+);
+
 
 export function ProgressCircle({ progress, onProgressChange }: ProgressCircleProps) {
 
@@ -25,7 +43,7 @@ export function ProgressCircle({ progress, onProgressChange }: ProgressCirclePro
             case 'none':
                 return <Circle className="text-muted-foreground/50" />;
             case 'half':
-                return <ChevronsRight className="text-green-500" />;
+                return <HalfCircle />;
             case 'full':
                 return <Circle className="text-green-500 fill-current" />;
             default:
