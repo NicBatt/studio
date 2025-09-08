@@ -3,7 +3,7 @@
 
 import { useState, useMemo } from 'react';
 import type { Task } from '@/lib/types';
-import { format, startOfYear, endOfYear, eachDayOfInterval, getDay, addYears, subYears, isSameDay } from 'date-fns';
+import { format, startOfYear, endOfYear, eachDayOfInterval, getDay, addYears, subYears, isSameDay, getWeek } from 'date-fns';
 import { isTaskForDate, cn } from '@/lib/utils';
 import { AllProgress } from './weekly-progress';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
@@ -56,16 +56,19 @@ export function YearlyView({ allTasks, allProgress }: YearlyViewProps) {
   const goToPreviousYear = () => setCurrentYear(subYears(currentYear, 1));
 
   // Create an array of 53 weeks * 7 days, initialized to null
-  const gridCells = Array(7 * 53).fill(null);
+  const gridCells: (Date | null)[] = Array(7 * 53).fill(null);
   
   // Place each date in the correct grid cell
+  const firstDayOfYear = startOfYear(currentYear);
+  const firstDayOfWeek = getDay(firstDayOfYear); // Sunday = 0, which is the start of our grid row
+
   yearDates.forEach(date => {
       const dayOfWeek = getDay(date); // Sunday = 0
-      const weekOfMonth = Math.floor((date.getDate() - 1) / 7);
-      const dayOfYear = parseInt(format(date, 'D'), 10) -1;
-      const weekOfYear = Math.floor(dayOfYear / 7);
-      const gridIndex = dayOfWeek + weekOfYear * 7;
-      if (gridIndex < gridCells.length) {
+      // Calculate week of year, making sure to account for the starting day of the week
+      const weekOfYear = getWeek(date, { weekStartsOn: 0, firstWeekContainsDate: 1 });
+      const gridIndex = dayOfWeek + (weekOfYear -1) * 7;
+      
+      if (gridIndex >= 0 && gridIndex < gridCells.length) {
         gridCells[gridIndex] = date;
       }
   });
@@ -85,18 +88,21 @@ export function YearlyView({ allTasks, allProgress }: YearlyViewProps) {
         </div>
         <div className="flex gap-4">
              <div className="flex flex-col gap-2 text-xs text-muted-foreground pt-6">
-                <span>Sun</span>
-                <span>Mon</span>
-                <span>Tue</span>
-                <span>Wed</span>
-                <span>Thu</span>
-                <span>Fri</span>
-                <span>Sat</span>
+                <span className="h-3">Sun</span>
+                <span className="h-3">Mon</span>
+                <span className="h-3">Tue</span>
+                <span className="h-3">Wed</span>
+                <span className="h-3">Thu</span>
+                <span className="h-3">Fri</span>
+                <span className="h-3">Sat</span>
             </div>
             <div className="grid grid-rows-7 grid-flow-col gap-1">
-            {yearDates.map((date, index) => {
-                const percentage = getCompletionPercentage(date);
-                return (
+            {gridCells.map((date, index) => {
+              if (!date) {
+                return <div key={index} className="w-3 h-3" />;
+              }
+              const percentage = getCompletionPercentage(date);
+              return (
                 <Tooltip key={index}>
                     <TooltipTrigger asChild>
                     <div
@@ -114,7 +120,7 @@ export function YearlyView({ allTasks, allProgress }: YearlyViewProps) {
                     )}
                     </TooltipContent>
                 </Tooltip>
-                );
+              );
             })}
             </div>
         </div>
