@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -140,8 +139,8 @@ export default function Home() {
         <UserProfile />
       </div>
       <Sidebar>
-        <SidebarHeader className="p-2">
-            <div className="flex items-center justify-center gap-2 p-2">
+        <SidebarHeader className="p-2 justify-center">
+            <div className="flex items-center gap-2 p-2">
                 <h1 className="text-2xl font-headline font-bold">Theme Journal</h1>
             </div>
         </SidebarHeader>
@@ -158,16 +157,6 @@ export default function Home() {
                         onDayClick={handleDayClick}
                         selectedDate={selectedDate}
                     />
-                    {activeTheme && (
-                      <div className="p-4 text-center">
-                        <h3 
-                          className="font-bold text-lg text-foreground"
-                          style={{ textShadow: `0 0 8px ${activeTheme.color}`}}
-                        >
-                          {activeTheme.label}
-                        </h3>
-                      </div>
-                    )}
                 </SidebarContent>
                 <SidebarFooter className="p-2">
                     <Button onClick={() => setIsThemeManagerOpen(true)} variant="secondary" className="w-full">

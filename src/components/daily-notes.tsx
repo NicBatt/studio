@@ -51,17 +51,19 @@ export function DailyNotes({ selectedDate, user, notes, activeNoteId, activeThem
         )
     }
 
-    const containerStyle = activeTheme 
-        ? { background: `linear-gradient(to top, ${hexToRgba(activeTheme.color, 0.2)}, transparent)` }
-        : { backgroundColor: 'transparent' };
-
     return (
-        <div className="h-full flex flex-col" style={containerStyle}>
-            <header className="p-4 border-b flex items-center gap-4">
-                {trigger}
-                <div className="flex items-center gap-3">
+        <div className="h-full flex flex-col">
+            <header className="p-4 border-b flex items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                    {trigger}
                     <h1 className="text-2xl font-bold font-headline">{format(selectedDate, "MMMM d, yyyy")}</h1>
                 </div>
+                <div className="flex-1 text-center">
+                    {activeTheme && (
+                        <h2 className="text-2xl font-bold font-headline text-foreground/80">{activeTheme.label}</h2>
+                    )}
+                </div>
+                <div className="w-1/4"></div>
             </header>
             <div className="flex-grow">
                 <NoteEditor 
