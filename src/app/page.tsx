@@ -10,10 +10,10 @@ import { UserProfile } from '@/components/user-profile';
 import { useAuth } from '@/hooks/use-auth';
 import { db, getThemes } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp, onSnapshot, query, where, orderBy, doc, deleteDoc, updateDoc, Timestamp } from "firebase/firestore";
-import { decryptContent } from '@/lib/encryption';
+import { decryptContent, encryptContent } from '@/lib/encryption';
 import { ThemeCalendar } from '@/components/theme-calendar';
 import { Button } from '@/components/ui/button';
-import { BookPlus, FilePlus } from 'lucide-react';
+import { BookPlus, FilePlus, Palette } from 'lucide-react';
 import { ThemeManager } from '@/components/theme-manager';
 import { format, parseISO } from 'date-fns';
 import { hexToRgba } from '@/lib/utils';
@@ -161,7 +161,11 @@ export default function Home() {
                         selectedDate={selectedDate}
                     />
                 </SidebarContent>
-                <SidebarFooter className="p-2">
+                <SidebarFooter className="p-2 flex flex-col gap-2">
+                     <Button onClick={() => setIsThemeManagerOpen(true)} variant="secondary" className="w-full">
+                        <Palette className="mr-2"/>
+                        Manage Themes
+                    </Button>
                     <Button onClick={() => setIsTaskManagerOpen(true)} variant="secondary" className="w-full">
                         <BookPlus className="mr-2"/>
                         Manage Tasks
@@ -186,6 +190,7 @@ export default function Home() {
             trigger={<SidebarTrigger />}
         />
       </SidebarInset>
+      {user && <ThemeManager isOpen={isThemeManagerOpen} onOpenChange={setIsThemeManagerOpen} user={user} existingThemes={themes} />}
       {user && <TaskManager isOpen={isTaskManagerOpen} onOpenChange={setIsTaskManagerOpen} user={user} existingTasks={tasks} />}
     </SidebarProvider>
   );
