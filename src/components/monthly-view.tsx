@@ -53,6 +53,9 @@ export function MonthlyView({ allTasks, allProgress, onProgressChange, uniqueTas
                     <thead>
                         <tr className="border-b">
                             <th className="sticky left-0 bg-background/95 backdrop-blur-sm z-10 w-1/3 md:w-1/4 p-2 text-left font-medium text-muted-foreground">Task</th>
+                            {emptyCells.map((_, index) => (
+                              <th key={`empty-${index}`} className="p-2 text-center font-medium text-muted-foreground w-20"></th>
+                            ))}
                             {monthDates.map(date => (
                                 <th key={date.toISOString()} className={cn(
                                     "p-2 text-center font-medium text-muted-foreground w-20",
@@ -70,6 +73,9 @@ export function MonthlyView({ allTasks, allProgress, onProgressChange, uniqueTas
                                     <td className="sticky left-0 bg-background/95 backdrop-blur-sm z-10 p-2 font-medium w-1/3 md:w-1/4 align-top">
                                         {task.label}
                                     </td>
+                                    {emptyCells.map((_, index) => (
+                                      <td key={`empty-cell-${index}`} className="p-2 align-middle text-center w-20"></td>
+                                    ))}
                                     {monthDates.map(date => {
                                         const dateKey = format(date, 'yyyy-MM-dd');
                                         const isVisible = isTaskForDate(task, date);
