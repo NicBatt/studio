@@ -80,20 +80,9 @@ export function NoteEditor({ activeNote, onUpdateNote, disabled = false }: NoteE
   }
 
   return (
-    <div className="flex flex-col h-full bg-card animate-fade-in">
+    <div className="flex flex-col h-full bg-card animate-fade-in relative">
       <header className="flex items-center justify-between p-4 border-b shrink-0">
         <h1 className="text-xl font-headline truncate pr-4">{noteTitle}</h1>
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" onClick={handleSave} aria-label="Save note" disabled={disabled}>
-            <Save />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={() => setIsPreview(!isPreview)} aria-label={isPreview ? "Show editor" : "Show preview"} disabled={disabled}>
-            {isPreview ? <Code /> : <Eye />}
-          </Button>
-          <Button variant="ghost" size="icon" onClick={handleExport} aria-label="Export note" disabled={disabled}>
-            <Download />
-          </Button>
-        </div>
       </header>
       <main className="flex-grow overflow-auto">
         {isPreview ? (
@@ -111,6 +100,17 @@ export function NoteEditor({ activeNote, onUpdateNote, disabled = false }: NoteE
           />
         )}
       </main>
+       <div className="absolute bottom-4 right-4 flex items-center gap-2">
+          <Button variant="ghost" size="icon" onClick={handleSave} aria-label="Save note" disabled={disabled} className="bg-card hover:bg-accent rounded-full shadow-lg h-12 w-12">
+            <Save />
+          </Button>
+          <Button variant="ghost" size="icon" onClick={() => setIsPreview(!isPreview)} aria-label={isPreview ? "Show editor" : "Show preview"} disabled={disabled} className="bg-card hover:bg-accent rounded-full shadow-lg h-12 w-12">
+            {isPreview ? <Code /> : <Eye />}
+          </Button>
+          <Button variant="ghost" size="icon" onClick={handleExport} aria-label="Export note" disabled={disabled} className="bg-card hover:bg-accent rounded-full shadow-lg h-12 w-12">
+            <Download />
+          </Button>
+        </div>
     </div>
   );
 }
