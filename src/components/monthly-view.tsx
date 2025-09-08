@@ -3,7 +3,7 @@
 
 import { useState, useMemo } from 'react';
 import type { Task, TaskProgress } from '@/lib/types';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addMonths, subMonths } from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addMonths, subMonths, getDay } from 'date-fns';
 import { ProgressCircle } from './progress-circle';
 import { isTaskForDate, cn } from '@/lib/utils';
 import { ScrollArea } from './ui/scroll-area';
@@ -18,6 +18,8 @@ interface MonthlyViewProps {
   uniqueTasks: Task[];
 }
 
+const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
 export function MonthlyView({ allTasks, allProgress, onProgressChange, uniqueTasks }: MonthlyViewProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
@@ -26,6 +28,10 @@ export function MonthlyView({ allTasks, allProgress, onProgressChange, uniqueTas
     const end = endOfMonth(currentMonth);
     return eachDayOfInterval({ start, end });
   }, [currentMonth]);
+  
+  const firstDayOfMonth = getDay(startOfMonth(currentMonth)); // 0 = Sunday, 1 = Monday...
+  const emptyCells = Array(firstDayOfMonth).fill(null);
+
 
   const goToNextMonth = () => setCurrentMonth(addMonths(currentMonth, 1));
   const goToPreviousMonth = () => setCurrentMonth(subMonths(currentMonth, 1));

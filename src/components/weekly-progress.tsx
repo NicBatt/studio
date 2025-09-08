@@ -8,6 +8,7 @@ import { WeeklyView } from './weekly-view';
 import { MonthlyView } from './monthly-view';
 import { YearlyView } from './yearly-view';
 import { SheetHeader, SheetTitle, SheetDescription } from './ui/sheet';
+import { parseISO } from 'date-fns';
 
 interface WeeklyProgressProps {
   allTasks: Task[];
@@ -35,13 +36,8 @@ export function WeeklyProgress({ allTasks }: WeeklyProgressProps) {
   };
   
   const uniqueTasks = useMemo(() => {
-    const taskMap = new Map<string, Task>();
-    allTasks.forEach(task => {
-        if (!taskMap.has(task.id)) {
-            taskMap.set(task.id, task);
-        }
-    });
-    return Array.from(taskMap.values());
+    return [...new Map(allTasks.map(item => [item['id'], item])).values()]
+      .sort((a,b) => a.label.localeCompare(b.label));
   }, [allTasks]);
 
 
