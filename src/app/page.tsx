@@ -8,8 +8,8 @@ import { NoteEditor } from '@/components/note-editor';
 import { Skeleton } from '@/components/ui/skeleton';
 import { UserProfile } from '@/components/user-profile';
 import { useAuth } from '@/hooks/use-auth';
-
-const LOCAL_STORAGE_KEY_PREFIX = 'theme-journal-notes';
+import { db } from '@/lib/firebase';
+import { collection, addDoc, serverTimestamp, onSnapshot, query, where, orderBy, doc, deleteDoc, updateDoc, Timestamp } from "firebase/firestore";
 
 export default function Home() {
   const { user, loading: authLoading } = useAuth();
@@ -17,79 +17,68 @@ export default function Home() {
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const getLocalStorageKey = () => {
-    return user ? `${LOCAL_STORAGE_KEY_PREFIX}-${user.uid}` : null;
-  };
-  
-  // Load notes from localStorage on initial client render or when user changes
+  // Load notes from Firestore
   useEffect(() => {
-    if (authLoading) return;
-    setIsLoading(true);
-    const storageKey = getLocalStorageKey();
-
-    // When user logs out, clear the notes
-    if (!storageKey) {
-        setNotes([]);
-        setActiveNoteId(null);
-        setIsLoading(false);
-        return;
+    if (authLoading) {
+      setIsLoading(true);
+      return;
     }
-
-    try {
-      const savedNotes = localStorage.getItem(storageKey);
-      if (savedNotes) {
-        const parsedNotes: Note[] = JSON.parse(savedNotes);
-        const sortedNotes = parsedNotes.sort((a, b) => b.lastModified - a.lastModified);
-        setNotes(sortedNotes);
-        if (sortedNotes.length > 0) {
-          setActiveNoteId(sortedNotes[0].id);
-        } else {
-          setActiveNoteId(null);
-        }
-      } else {
-        setNotes([]);
-        setActiveNoteId(null);
-      }
-    } catch (error) {
-      console.error("Failed to load notes from local storage", error);
+    if (!user) {
       setNotes([]);
       setActiveNoteId(null);
-    } finally {
       setIsLoading(false);
+      return;
     }
-  }, [user, authLoading]);
 
-  // Save notes to localStorage whenever they change
-  useEffect(() => {
-    if (!isLoading && !authLoading) {
-      const storageKey = getLocalStorageKey();
-      if (storageKey) {
-        try {
-          localStorage.setItem(storageKey, JSON.stringify(notes));
-        } catch (error) {
-          console.error("Failed to save notes to local storage", error);
+    setIsLoading(true);
+    const q = query(collection(db, "notes"), where("userId", "==", user.uid), orderBy("lastModified", "desc"));
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const notesData: Note[] = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        notesData.push({ 
+          id: doc.id, 
+          content: data.content,
+          lastModified: (data.lastModified as Timestamp)?.toMillis() || Date.now(),
+          userId: data.userId
+        });
+      });
+      setNotes(notesData);
+      if (notesData.length > 0) {
+        if (!activeNoteId || !notesData.some(n => n.id === activeNoteId)) {
+          setActiveNoteId(notesData[0].id);
         }
+      } else {
+        setActiveNoteId(null);
       }
-    }
-  }, [notes, isLoading, authLoading, user]);
+      setIsLoading(false);
+    }, (error) => {
+        console.error("Error loading notes from Firestore", error);
+        setIsLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [user, authLoading]);
   
-  const handleNewNote = () => {
+  const handleNewNote = async () => {
     if (!user) return;
-    const newNote: Note = {
-      id: crypto.randomUUID(),
-      content: 'New Note',
-      lastModified: Date.now(),
-    };
-    const updatedNotes = [newNote, ...notes];
-    setNotes(updatedNotes);
-    setActiveNoteId(newNote.id);
+    try {
+        const docRef = await addDoc(collection(db, "notes"), {
+            content: 'New Note',
+            lastModified: serverTimestamp(),
+            userId: user.uid
+        });
+        setActiveNoteId(docRef.id);
+    } catch (error) {
+        console.error("Error creating new note:", error);
+    }
   };
   
-  const handleDeleteNote = (id: string) => {
-    const updatedNotes = notes.filter(note => note.id !== id);
-    setNotes(updatedNotes);
-    if (activeNoteId === id) {
-      setActiveNoteId(updatedNotes.length > 0 ? updatedNotes[0].id : null);
+  const handleDeleteNote = async (id: string) => {
+    try {
+        await deleteDoc(doc(db, "notes", id));
+    } catch(error) {
+        console.error("Error deleting note:", error);
     }
   };
   
@@ -97,12 +86,16 @@ export default function Home() {
     setActiveNoteId(id);
   };
   
-  const handleUpdateNote = (id: string, content: string) => {
-    const updatedNotes = notes.map(note => 
-      note.id === id ? { ...note, content, lastModified: Date.now() } : note
-    );
-    // Sort to bring the most recently modified note to the top
-    setNotes(updatedNotes.sort((a, b) => b.lastModified - a.lastModified));
+  const handleUpdateNote = async (id: string, content: string) => {
+    try {
+        const noteRef = doc(db, "notes", id);
+        await updateDoc(noteRef, {
+            content: content,
+            lastModified: serverTimestamp()
+        });
+    } catch (error) {
+        console.error("Error updating note:", error);
+    }
   };
   
   const activeNote = notes.find(note => note.id === activeNoteId) || null;

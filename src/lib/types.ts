@@ -1,5 +1,8 @@
+import type { Timestamp } from 'firebase/firestore';
+
 export type Note = {
   id: string;
   content: string;
-  lastModified: number;
+  lastModified: Timestamp | number;
+  userId?: string;
 };

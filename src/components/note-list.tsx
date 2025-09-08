@@ -14,6 +14,7 @@ import { FilePlus, Trash2, BookText } from "lucide-react";
 import { formatDistanceToNow } from "date-fns/formatDistanceToNow";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useAuth } from '@/hooks/use-auth';
+import { Timestamp } from 'firebase/firestore';
 
 type NoteListProps = {
   notes: Note[];
@@ -43,6 +44,10 @@ export function NoteList({ notes, activeNoteId, onSelectNote, onNewNote, onDelet
           {notes.length > 0 ? (
             notes.map(note => {
               const title = note.content.split('\n')[0].trim() || 'Untitled Note';
+              const lastModifiedDate = typeof note.lastModified === 'number' 
+                ? new Date(note.lastModified) 
+                : (note.lastModified as Timestamp)?.toDate();
+              
               return (
                 <SidebarMenuItem key={note.id}>
                   <SidebarMenuButton
@@ -53,7 +58,7 @@ export function NoteList({ notes, activeNoteId, onSelectNote, onNewNote, onDelet
                   >
                     <span className="font-semibold text-sm truncate w-full">{title}</span>
                     <span className="text-xs text-muted-foreground">
-                      {formatDistanceToNow(new Date(note.lastModified), { addSuffix: true })}
+                      {lastModifiedDate ? formatDistanceToNow(lastModifiedDate, { addSuffix: true }) : 'Just now'}
                     </span>
                   </SidebarMenuButton>
                   <AlertDialog>
