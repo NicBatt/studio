@@ -56,11 +56,10 @@ export function DailyNotes({ selectedDate, user, notes, activeNoteId, activeThem
             <header className="p-4 border-b flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                     {trigger}
-                    <h1 className="text-2xl font-bold font-headline">{format(selectedDate, "MMMM d, yyyy")}</h1>
                 </div>
                 <div className="flex-1 text-center">
                     {activeTheme && (
-                        <h2 className="text-2xl font-bold font-headline text-foreground/80">{activeTheme.label}</h2>
+                        <h2 className="text-2xl font-bold font-headline text-foreground/80">season of {activeTheme.label}</h2>
                     )}
                 </div>
                 <div className="w-1/4"></div>
