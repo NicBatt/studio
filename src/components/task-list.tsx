@@ -12,25 +12,24 @@ interface TaskListProps {
 
 export function TaskList({ tasks }: TaskListProps) {
   const [taskProgress, setTaskProgress] = useState<Record<string, TaskProgress>>({});
+  const todayKey = format(new Date(), 'yyyy-MM-dd');
 
   useEffect(() => {
-    const todayKey = format(new Date(), 'yyyy-MM-dd');
-    const storedDate = localStorage.getItem('taskProgressDate');
-    
-    if (storedDate === todayKey) {
-        const storedProgress = JSON.parse(localStorage.getItem('taskProgress') || '{}');
-        setTaskProgress(storedProgress);
+    const allProgress = JSON.parse(localStorage.getItem('allTaskProgress') || '{}');
+    if (allProgress[todayKey]) {
+        setTaskProgress(allProgress[todayKey]);
     } else {
-        localStorage.setItem('taskProgressDate', todayKey);
-        localStorage.setItem('taskProgress', '{}');
         setTaskProgress({});
     }
-  }, [tasks]);
+  }, [tasks, todayKey]);
 
   const handleProgressChange = (taskId: string, newProgress: TaskProgress) => {
-    const newProgressState = { ...taskProgress, [taskId]: newProgress };
-    setTaskProgress(newProgressState);
-    localStorage.setItem('taskProgress', JSON.stringify(newProgressState));
+    const newProgressForToday = { ...taskProgress, [taskId]: newProgress };
+    setTaskProgress(newProgressForToday);
+    
+    const allProgress = JSON.parse(localStorage.getItem('allTaskProgress') || '{}');
+    allProgress[todayKey] = newProgressForToday;
+    localStorage.setItem('allTaskProgress', JSON.stringify(allProgress));
   };
 
   const getMilestoneText = (task: Task) => {

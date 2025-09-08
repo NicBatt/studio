@@ -13,12 +13,14 @@ import { collection, addDoc, serverTimestamp, onSnapshot, query, where, orderBy,
 import { decryptContent, encryptContent } from '@/lib/encryption';
 import { ThemeCalendar } from '@/components/theme-calendar';
 import { Button } from '@/components/ui/button';
-import { BookPlus, FilePlus, Palette } from 'lucide-react';
+import { BookPlus, CalendarCheck, Palette } from 'lucide-react';
 import { ThemeManager } from '@/components/theme-manager';
 import { format, parseISO } from 'date-fns';
 import { isTaskForDate } from '@/lib/utils';
 import { NoteListDaily } from '@/components/note-list-daily';
 import { TaskManager } from '@/components/task-manager';
+import { WeeklyProgress } from '@/components/weekly-progress';
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 
 
 export default function Home() {
@@ -30,6 +32,7 @@ export default function Home() {
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
   const [isThemeManagerOpen, setIsThemeManagerOpen] = useState(false);
   const [isTaskManagerOpen, setIsTaskManagerOpen] = useState(false);
+  const [isWeeklyProgressOpen, setIsWeeklyProgressOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   const formattedDate = format(selectedDate, 'yyyy-MM-dd');
@@ -184,6 +187,20 @@ export default function Home() {
                         <BookPlus className="mr-2"/>
                         Manage Tasks
                     </Button>
+                    <Sheet open={isWeeklyProgressOpen} onOpenChange={setIsWeeklyProgressOpen}>
+                      <SheetTrigger asChild>
+                         <Button variant="secondary" className="w-full">
+                            <CalendarCheck className="mr-2"/>
+                            Weekly Progress
+                        </Button>
+                      </SheetTrigger>
+                      <SheetContent side="bottom" className="h-4/5">
+                        <SheetHeader>
+                          <SheetTitle>This Week's Progress</SheetTitle>
+                        </SheetHeader>
+                        <WeeklyProgress allTasks={tasks} />
+                      </SheetContent>
+                    </Sheet>
                 </SidebarFooter>
             </>
         ) : (
