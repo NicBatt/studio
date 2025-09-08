@@ -61,7 +61,7 @@ export function DailyNotes({ selectedDate, user, notes, activeNoteId, activeThem
                             className="font-bold text-xl px-3 py-1 rounded-full"
                             style={{ 
                                 color: activeTheme.color,
-                                backgroundColor: `rgba(${parseInt(activeTheme.color.slice(1, 3), 16)}, ${parseInt(activeTheme.color.slice(3, 5), 16)}, ${parseInt(activeTheme.color.slice(5, 7), 16)}, 0.1)`
+                                textShadow: '0 0 1px black, 0 0 1px black, 0 0 1px black, 0 0 1px black'
                             }}
                         >
                             {activeTheme.label}
