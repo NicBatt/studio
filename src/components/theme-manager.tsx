@@ -226,7 +226,6 @@ export function ThemeManager({ isOpen, onOpenChange, user, existingThemes }: The
                     />
                   </div>
                 ))}
-                {editingTheme && <p className="text-xs text-muted-foreground">Tasks from outcomes can only be created with a new theme.</p>}
               </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
