@@ -160,12 +160,17 @@ export default function Home() {
                     />
                     {activeTheme && (
                       <div className="p-4 text-center">
-                        <h3 className="font-bold text-lg text-black">{activeTheme.label}</h3>
+                        <h3 
+                          className="font-bold text-lg text-foreground"
+                          style={{ textShadow: `0 0 8px ${activeTheme.color}`}}
+                        >
+                          {activeTheme.label}
+                        </h3>
                       </div>
                     )}
                 </SidebarContent>
                 <SidebarFooter className="p-2">
-                    <Button onClick={() => setIsThemeManagerOpen(true)} className="w-full">
+                    <Button onClick={() => setIsThemeManagerOpen(true)} variant="secondary" className="w-full">
                         <BookPlus className="mr-2"/>
                         Manage Themes
                     </Button>
