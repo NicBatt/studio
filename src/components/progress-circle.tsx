@@ -3,7 +3,7 @@
 
 import { TaskProgress } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { Circle, CircleDot, CheckCircle2 } from "lucide-react";
+import { Circle, ChevronsRight } from "lucide-react";
 
 interface ProgressCircleProps {
     progress: TaskProgress;
@@ -25,9 +25,9 @@ export function ProgressCircle({ progress, onProgressChange }: ProgressCirclePro
             case 'none':
                 return <Circle className="text-muted-foreground/50" />;
             case 'half':
-                return <CircleDot className="text-green-500" />;
+                return <ChevronsRight className="text-green-500" />;
             case 'full':
-                return <CheckCircle2 className="text-green-500" />;
+                return <Circle className="text-green-500 fill-current" />;
             default:
                 return <Circle className="text-muted-foreground/50" />;
         }
@@ -37,7 +37,7 @@ export function ProgressCircle({ progress, onProgressChange }: ProgressCirclePro
         <button
             onClick={handleClick}
             className={cn(
-                "flex items-center justify-center rounded-full transition-colors",
+                "flex items-center justify-center rounded-full transition-colors h-6 w-6",
                 "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
             )}
             aria-label={`Task progress: ${progress}. Click to change.`}
