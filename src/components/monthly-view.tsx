@@ -48,68 +48,43 @@ export function MonthlyView({ allTasks, allProgress, onProgressChange, uniqueTas
             </Button>
         </div>
         <ScrollArea className="flex-grow">
-            <div className="relative">
-                <table className="w-full border-collapse table-fixed">
-                    <thead>
-                        <tr className="border-b">
-                            <th className="sticky left-0 bg-background/95 backdrop-blur-sm z-10 w-1/3 md:w-1/4 p-2 text-left font-medium text-muted-foreground">Task</th>
-                            {WEEKDAY_LABELS.map((label, index) => (
-                                <th key={index} className="p-2 text-center font-medium text-muted-foreground w-20">
-                                    {label}
-                                </th>
-                            ))}
-                        </tr>
-                         <tr className="border-b">
-                            <th className="sticky left-0 bg-background/95 backdrop-blur-sm z-10 w-1/3 md:w-1/4 p-2 text-left font-medium text-muted-foreground"></th>
-                            {emptyCells.map((_, index) => (
-                              <th key={`empty-${index}`} className="p-2 text-center font-medium text-muted-foreground w-20"></th>
-                            ))}
-                            {monthDates.map(date => (
-                                <th key={date.toISOString()} className={cn(
-                                    "p-2 text-center font-medium text-muted-foreground w-20",
-                                    isSameDay(date, new Date()) && "text-primary"
-                                )}>
-                                    <div className="text-sm">{format(date, 'd')}</div>
-                                </th>
-                            ))}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {uniqueTasks.map(task => {
-                            return (
-                                <tr key={task.id} className="border-b">
-                                    <td className="sticky left-0 bg-background/95 backdrop-blur-sm z-10 p-2 font-medium w-1/3 md:w-1/4 align-top">
-                                        {task.label}
-                                    </td>
-                                    {emptyCells.map((_, index) => (
-                                      <td key={`empty-cell-${index}`} className="p-2 align-middle text-center w-20"></td>
-                                    ))}
-                                    {monthDates.map(date => {
-                                        const dateKey = format(date, 'yyyy-MM-dd');
-                                        const isVisible = isTaskForDate(task, date);
+            <div className="flex justify-center">
+                <div className="grid grid-cols-7 gap-2 p-2" style={{ gridTemplateRows: `repeat(${uniqueTasks.length + 1}, auto)`}}>
+                    {WEEKDAY_LABELS.map(label => (
+                        <div key={label} className="text-center font-medium text-muted-foreground">{label}</div>
+                    ))}
+                    {emptyCells.map((_, index) => <div key={`empty-header-${index}`}></div>)}
+                    {monthDates.map(date => (
+                         <div key={date.toISOString()} className={cn("text-center font-medium", isSameDay(date, new Date()) && "text-primary")}>
+                            {format(date, 'd')}
+                         </div>
+                    ))}
 
-                                        if (!isVisible) {
-                                            return <td key={dateKey} className="p-2 align-middle text-center w-20"></td>;
-                                        }
+                     {uniqueTasks.map(task => (
+                         <>
+                            {emptyCells.map((_, index) => <div key={`empty-task-${task.id}-${index}`}></div>)}
+                            {monthDates.map(date => {
+                                const dateKey = format(date, 'yyyy-MM-dd');
+                                const isVisible = isTaskForDate(task, date);
 
-                                        const progress = allProgress[dateKey]?.[task.id] || 'none';
+                                if (!isVisible) {
+                                    return <div key={`${dateKey}-${task.id}`}></div>;
+                                }
 
-                                        return (
-                                            <td key={dateKey} className="p-2 align-middle text-center w-20">
-                                                <div className="flex justify-center">
-                                                    <ProgressCircle
-                                                        progress={progress}
-                                                        onProgressChange={(newProgress) => onProgressChange(dateKey, task.id, newProgress)}
-                                                    />
-                                                </div>
-                                            </td>
-                                        )
-                                    })}
-                                </tr>
-                            )
-                        })}
-                    </tbody>
-                </table>
+                                const progress = allProgress[dateKey]?.[task.id] || 'none';
+
+                                return (
+                                    <div key={`${dateKey}-${task.id}`} className="flex justify-center items-center h-8 w-8">
+                                        <ProgressCircle
+                                            progress={progress}
+                                            onProgressChange={(newProgress) => onProgressChange(dateKey, task.id, newProgress)}
+                                        />
+                                    </div>
+                                )
+                            })}
+                        </>
+                    ))}
+                </div>
             </div>
         </ScrollArea>
     </div>

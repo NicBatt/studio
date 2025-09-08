@@ -76,19 +76,19 @@ export function YearlyView({ allTasks, allProgress }: YearlyViewProps) {
                 <ChevronRight />
             </Button>
         </div>
-        <div className="flex gap-4 overflow-x-auto p-2">
-             <div className="flex flex-col text-xs text-muted-foreground pt-1 space-y-2">
-                <span className="h-4">Sun</span>
-                <span className="h-4">Mon</span>
-                <span className="h-4">Tue</span>
-                <span className="h-4">Wed</span>
-                <span className="h-4">Thu</span>
-                <span className="h-4">Fri</span>
-                <span className="h-4">Sat</span>
+        <div className="flex gap-4 overflow-x-auto p-4 justify-center">
+             <div className="flex flex-col text-xs text-muted-foreground pt-1 space-y-4">
+                <span className="h-5">Sun</span>
+                <span className="h-5">Mon</span>
+                <span className="h-5">Tue</span>
+                <span className="h-5">Wed</span>
+                <span className="h-5">Thu</span>
+                <span className="h-5">Fri</span>
+                <span className="h-5">Sat</span>
             </div>
             <div className="grid grid-rows-7 grid-flow-col gap-2">
             {gridCells.map((date, index) => {
-              const daySize = 'w-4 h-4';
+              const daySize = 'w-5 h-5';
               if (!date) {
                 return <div key={index} className={cn(daySize)} />;
               }
