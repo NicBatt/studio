@@ -28,7 +28,7 @@ export function NoteList({ notes, activeNoteId, onSelectNote, onNewNote, onDelet
       <SidebarHeader className="flex items-center justify-between">
         <div className="flex items-center gap-2">
             <BookText className="size-6 text-primary" />
-            <h2 className="text-xl font-headline font-bold">Memoirist</h2>
+            <h2 className="text-xl font-headline font-bold">Theme Journal</h2>
         </div>
         <Button variant="ghost" size="icon" onClick={onNewNote} aria-label="New Note">
           <FilePlus />

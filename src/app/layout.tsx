@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 
 export const metadata: Metadata = {
-  title: 'Memoirist',
+  title: 'Theme Journal',
   description: 'A minimalist app for your text-based notes.',
 };
 

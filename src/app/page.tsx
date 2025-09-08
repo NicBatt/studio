@@ -7,7 +7,7 @@ import { NoteList } from '@/components/note-list';
 import { NoteEditor } from '@/components/note-editor';
 import { Skeleton } from '@/components/ui/skeleton';
 
-const LOCAL_STORAGE_KEY = 'memoirist-notes';
+const LOCAL_STORAGE_KEY = 'theme-journal-notes';
 
 export default function Home() {
   const [notes, setNotes] = useState<Note[]>([]);

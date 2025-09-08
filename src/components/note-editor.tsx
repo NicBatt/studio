@@ -61,7 +61,7 @@ export function NoteEditor({ activeNote, onUpdateNote }: NoteEditorProps) {
   if (!activeNote) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-8 animate-fade-in">
-        <h2 className="text-2xl font-headline mb-2">Welcome to Memoirist</h2>
+        <h2 className="text-2xl font-headline mb-2">Welcome to Theme Journal</h2>
         <p>Select a note from the sidebar or create a new one to get started.</p>
       </div>
     );
