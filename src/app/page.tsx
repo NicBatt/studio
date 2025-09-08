@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
@@ -32,7 +33,7 @@ export default function Home() {
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
   const [isThemeManagerOpen, setIsThemeManagerOpen] = useState(false);
   const [isTaskManagerOpen, setIsTaskManagerOpen] = useState(false);
-  const [isWeeklyProgressOpen, setIsWeeklyProgressOpen] = useState(false);
+  const [isProgressSheetOpen, setProgressSheetOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   const formattedDate = format(selectedDate, 'yyyy-MM-dd');
@@ -187,17 +188,14 @@ export default function Home() {
                         <BookPlus className="mr-2"/>
                         Manage Tasks
                     </Button>
-                    <Sheet open={isWeeklyProgressOpen} onOpenChange={setIsWeeklyProgressOpen}>
+                    <Sheet open={isProgressSheetOpen} onOpenChange={setProgressSheetOpen}>
                       <SheetTrigger asChild>
                          <Button variant="secondary" className="w-full">
                             <CalendarCheck className="mr-2"/>
-                            Weekly Progress
+                            View Progress
                         </Button>
                       </SheetTrigger>
                       <SheetContent side="bottom" className="h-4/5">
-                        <SheetHeader>
-                          <SheetTitle>This Week's Progress</SheetTitle>
-                        </SheetHeader>
                         <WeeklyProgress allTasks={tasks} />
                       </SheetContent>
                     </Sheet>
