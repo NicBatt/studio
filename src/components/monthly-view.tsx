@@ -53,6 +53,14 @@ export function MonthlyView({ allTasks, allProgress, onProgressChange, uniqueTas
                     <thead>
                         <tr className="border-b">
                             <th className="sticky left-0 bg-background/95 backdrop-blur-sm z-10 w-1/3 md:w-1/4 p-2 text-left font-medium text-muted-foreground">Task</th>
+                            {WEEKDAY_LABELS.map((label, index) => (
+                                <th key={index} className="p-2 text-center font-medium text-muted-foreground w-20">
+                                    {label}
+                                </th>
+                            ))}
+                        </tr>
+                         <tr className="border-b">
+                            <th className="sticky left-0 bg-background/95 backdrop-blur-sm z-10 w-1/3 md:w-1/4 p-2 text-left font-medium text-muted-foreground"></th>
                             {emptyCells.map((_, index) => (
                               <th key={`empty-${index}`} className="p-2 text-center font-medium text-muted-foreground w-20"></th>
                             ))}
