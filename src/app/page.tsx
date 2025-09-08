@@ -59,7 +59,7 @@ export default function Home() {
     });
 
     return () => unsubscribe();
-  }, [user, authLoading]);
+  }, [user, authLoading, activeNoteId]);
   
   const handleNewNote = async () => {
     if (!user) return;

@@ -18,7 +18,9 @@ export const decryptContent = (ciphertext: string, secret: string): string => {
     const bytes = CryptoJS.AES.decrypt(ciphertext, secret);
     const originalText = bytes.toString(CryptoJS.enc.Utf8);
     // If decryption results in an empty string, it's likely the secret was wrong
-    // or the ciphertext was invalid. Return the original ciphertext so the user can see it.
+    // or the ciphertext was invalid. In a real app, you might want to handle this
+    // more gracefully, but for now, we'll return the original ciphertext
+    // so the user can see it's not working as expected.
     if (!originalText) {
         return ciphertext;
     }
