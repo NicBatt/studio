@@ -9,6 +9,7 @@ import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { encryptContent } from '@/lib/encryption';
 import { NoteEditor } from './note-editor';
 import { Skeleton } from './ui/skeleton';
+import { format } from 'date-fns';
 
 interface DailyNotesProps {
     selectedDate: Date;
@@ -18,7 +19,7 @@ interface DailyNotesProps {
     onNewNote: () => void;
 }
 
-export function DailyNotes({ user, notes, activeNoteId, onNewNote }: DailyNotesProps) {
+export function DailyNotes({ selectedDate, user, notes, activeNoteId, onNewNote }: DailyNotesProps) {
     const [isLoading, setIsLoading] = useState(false); // No longer fetching here
     
     const handleUpdateNote = async (id: string, content: string) => {
@@ -46,14 +47,19 @@ export function DailyNotes({ user, notes, activeNoteId, onNewNote }: DailyNotesP
     }
 
     return (
-        <div className="h-full">
-            <NoteEditor 
-                activeNote={activeNote} 
-                onUpdateNote={handleUpdateNote} 
-                disabled={!user || notes.length === 0 && !activeNote} 
-                onNewNote={onNewNote}
-                key={activeNoteId} // Re-mount editor when active note changes
-            />
+        <div className="h-full flex flex-col">
+            <header className="p-4 border-b">
+                <h1 className="text-2xl font-bold font-headline">{format(selectedDate, "MMMM d, yyyy")}</h1>
+            </header>
+            <div className="flex-grow">
+                <NoteEditor 
+                    activeNote={activeNote} 
+                    onUpdateNote={handleUpdateNote} 
+                    disabled={!user || notes.length === 0 && !activeNote} 
+                    onNewNote={onNewNote}
+                    key={activeNoteId} // Re-mount editor when active note changes
+                />
+            </div>
         </div>
     );
 }

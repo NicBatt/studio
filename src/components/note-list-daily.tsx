@@ -27,7 +27,7 @@ export function NoteListDaily({ notes, activeNoteId, selectedDate, onSelectNote,
     <div className="flex flex-col h-full">
       <header className="p-4 border-b">
         <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">{format(selectedDate, "MMMM d, yyyy")}</h2>
+            <h2 className="text-lg font-semibold">Notes</h2>
         </div>
       </header>
       <div className="flex-grow overflow-y-auto">
