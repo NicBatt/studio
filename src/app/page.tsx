@@ -16,8 +16,9 @@ import { Button } from '@/components/ui/button';
 import { BookPlus, FilePlus } from 'lucide-react';
 import { ThemeManager } from '@/components/theme-manager';
 import { format, parseISO } from 'date-fns';
-import { NoteListDaily } from '@/components/note-list-daily';
 import { hexToRgba } from '@/lib/utils';
+import { NoteListDaily } from '@/components/note-list-daily';
+
 
 export default function Home() {
   const { user, loading: authLoading } = useAuth();
@@ -167,16 +168,8 @@ export default function Home() {
                           <h3 className="text-xl font-bold">{activeTheme.label}</h3>
                       </div>
                     )}
-                    <div className="flex-grow border-t mt-2">
-                      <NoteListDaily
-                          notes={notes}
-                          activeNoteId={activeNoteId}
-                          onSelectNote={setActiveNoteId}
-                          onDeleteNote={handleDeleteNote}
-                          selectedDate={selectedDate}
-                      />
-                    </div>
-                     <div className='p-2 border-t'>
+                    <div className="flex-grow" />
+                    <div className='p-2 border-t'>
                         <Button onClick={handleNewNote} className="w-full">
                             <FilePlus className="mr-2"/>
                             New Note

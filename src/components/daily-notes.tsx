@@ -10,6 +10,7 @@ import { encryptContent } from '@/lib/encryption';
 import { NoteEditor } from './note-editor';
 import { Skeleton } from './ui/skeleton';
 import { format } from 'date-fns';
+import { NoteListDaily } from './note-list-daily';
 
 interface DailyNotesProps {
     selectedDate: Date;
