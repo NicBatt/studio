@@ -17,7 +17,7 @@ function UserProfile() {
   const { user, loading, signInWithGoogle, logout } = useAuth();
 
   if (loading) {
-    return <Skeleton className="h-10 w-24" />;
+    return <Skeleton className="h-10 w-32" />;
   }
 
   if (!user) {
@@ -31,13 +31,14 @@ function UserProfile() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-          <Avatar className="h-10 w-10">
+        <Button variant="ghost" className="relative flex items-center gap-2 h-10 px-2 rounded-full">
+          <Avatar className="h-8 w-8">
             <AvatarImage src={user.photoURL ?? ""} alt={user.displayName ?? "User"} />
             <AvatarFallback>
               {user.displayName?.charAt(0).toUpperCase() ?? user.email?.charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>
+           <span className="font-medium text-sm hidden sm:inline">{user.displayName}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
