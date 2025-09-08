@@ -18,7 +18,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar as CalendarIcon, Trash2 } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { addDays, format, parseISO } from 'date-fns';
-import { DateRange } from 'react-day-picker';
+import { DateRange, SelectRangeEventHandler } from 'react-day-picker';
 import { CirclePicker } from 'react-color';
 import { createTheme, deleteTheme } from '@/lib/firebase';
 import type { Theme } from '@/lib/types';
@@ -33,7 +33,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { encryptContent, decryptContent } from '@/lib/encryption';
+import { encryptContent } from '@/lib/encryption';
 
 
 interface ThemeManagerProps {
@@ -81,13 +81,23 @@ export function ThemeManager({ isOpen, onOpenChange, user, existingThemes }: The
   }
   
   const decryptedLabel = (encryptedLabel: string) => {
-      return decryptContent(encryptedLabel, user.uid);
+      return encryptContent(encryptedLabel, user.uid);
   }
   
   const disabledDays = existingThemes.map(theme => ({
     from: parseISO(theme.startDate),
     to: parseISO(theme.endDate)
   }));
+
+  const handleDateSelect: SelectRangeEventHandler = (range, selectedDay) => {
+    if (dateRange?.from && dateRange.to) {
+        // Third click: reset the selection
+        setDateRange({ from: selectedDay, to: undefined });
+    } else {
+        setDateRange(range);
+    }
+  };
+
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
@@ -152,7 +162,7 @@ export function ThemeManager({ isOpen, onOpenChange, user, existingThemes }: The
                           format(dateRange.from, 'LLL dd, y')
                         )
                       ) : (
-                        <span>Pick a date</span>
+                        <span>Pick a date range</span>
                       )}
                     </Button>
                   </PopoverTrigger>
@@ -162,7 +172,7 @@ export function ThemeManager({ isOpen, onOpenChange, user, existingThemes }: The
                       mode="range"
                       defaultMonth={dateRange?.from}
                       selected={dateRange}
-                      onSelect={setDateRange}
+                      onSelect={handleDateSelect}
                       numberOfMonths={2}
                       disabled={disabledDays}
                     />
