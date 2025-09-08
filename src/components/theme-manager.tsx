@@ -19,7 +19,7 @@ import { Calendar as CalendarIcon, Trash2 } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { addDays, format, parseISO } from 'date-fns';
 import { DateRange, SelectRangeEventHandler } from 'react-day-picker';
-import { CirclePicker } from 'react-color';
+import { SketchPicker } from 'react-color';
 import { createTheme, deleteTheme } from '@/lib/firebase';
 import type { Theme } from '@/lib/types';
 import {
@@ -33,7 +33,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { encryptContent } from '@/lib/encryption';
+import { encryptContent, decryptContent } from '@/lib/encryption';
 
 
 interface ThemeManagerProps {
@@ -176,10 +176,10 @@ export function ThemeManager({ isOpen, onOpenChange, user, existingThemes }: The
                 </Popover>
               </div>
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right">Color</Label>
+            <div className="grid grid-cols-4 items-start gap-4">
+              <Label className="text-right pt-2">Color</Label>
               <div className="col-span-3">
-                <CirclePicker color={color} onChangeComplete={(c) => setColor(c.hex)} />
+                <SketchPicker color={color} onChangeComplete={(c) => setColor(c.hex)} />
               </div>
             </div>
           </div>
@@ -193,7 +193,7 @@ export function ThemeManager({ isOpen, onOpenChange, user, existingThemes }: The
                            <div className="flex items-center gap-3">
                              <div className="w-4 h-4 rounded-full" style={{backgroundColor: theme.color}}></div>
                              <div>
-                                 <p className="font-medium">{theme.label}</p>
+                                 <p className="font-medium">{decryptContent(theme.label, user.uid)}</p>
                                  <p className="text-sm text-muted-foreground">{format(parseISO(theme.startDate), 'MMM d')} - {format(parseISO(theme.endDate), 'MMM d, yyyy')}</p>
                              </div>
                            </div>
@@ -207,7 +207,7 @@ export function ThemeManager({ isOpen, onOpenChange, user, existingThemes }: The
                                     <AlertDialogHeader>
                                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                         <AlertDialogDescription>
-                                            This will permanently delete the theme "{theme.label}". This action cannot be undone.
+                                            This will permanently delete the theme "{decryptContent(theme.label, user.uid)}". This action cannot be undone.
                                         </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
@@ -241,5 +241,3 @@ export function ThemeManager({ isOpen, onOpenChange, user, existingThemes }: The
     </Dialog>
   );
 }
-
-    

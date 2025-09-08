@@ -157,17 +157,6 @@ export default function Home() {
                         onDayClick={handleDayClick}
                         selectedDate={selectedDate}
                     />
-                    {activeTheme && (
-                      <div 
-                        className="p-4 m-2 rounded-lg text-center border" 
-                        style={{ 
-                            backgroundColor: hexToRgba(activeTheme.color, 0.2),
-                            borderColor: activeTheme.color
-                        }}
-                      >
-                          <h3 className="text-xl font-bold">{activeTheme.label}</h3>
-                      </div>
-                    )}
                 </SidebarContent>
                 <SidebarFooter className="p-2">
                     <Button onClick={() => setIsThemeManagerOpen(true)} className="w-full">
@@ -188,6 +177,7 @@ export default function Home() {
             selectedDate={selectedDate} 
             user={user}
             notes={notes}
+            activeTheme={activeTheme}
             activeNoteId={activeNoteId}
             onNewNote={handleNewNote}
             trigger={<SidebarTrigger />}
