@@ -61,7 +61,7 @@ export function WeeklyProgress({ allTasks }: WeeklyProgressProps) {
           </SheetDescription>
         </SheetHeader>
         <Tabs defaultValue="week" className="mt-4 flex-grow flex flex-col">
-            <TabsList className="mx-auto">
+            <TabsList className="mx-auto shrink-0">
                 <TabsTrigger value="week">Week</TabsTrigger>
                 <TabsTrigger value="month">Month</TabsTrigger>
                 <TabsTrigger value="year">Year</TabsTrigger>
@@ -74,7 +74,7 @@ export function WeeklyProgress({ allTasks }: WeeklyProgressProps) {
                     uniqueTasks={uniqueTasks}
                 />
             </TabsContent>
-            <TabsContent value="month" className="flex-grow">
+            <TabsContent value="month" className="flex-grow min-h-0">
                  <MonthlyView
                     allTasks={allTasks}
                     allProgress={allProgress}

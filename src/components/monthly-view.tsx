@@ -36,7 +36,7 @@ export function MonthlyView({ allTasks, allProgress, onProgressChange }: Monthly
 
   return (
     <div className="h-full flex flex-col">
-        <div className="flex items-center justify-center p-2">
+        <div className="flex items-center justify-center p-2 shrink-0">
             <Button variant="ghost" size="icon" onClick={goToPreviousMonth}>
                 <ChevronLeft />
             </Button>
@@ -46,14 +46,14 @@ export function MonthlyView({ allTasks, allProgress, onProgressChange }: Monthly
             </Button>
         </div>
         
-        <div className="grid grid-cols-7 text-center font-medium text-muted-foreground text-sm">
+        <div className="grid grid-cols-7 text-center font-medium text-muted-foreground text-sm shrink-0">
              {WEEKDAY_LABELS.map(label => (
                 <div key={label} className="py-2">{label}</div>
             ))}
         </div>
 
         <ScrollArea className="flex-grow">
-            <div className="grid grid-cols-7 grid-rows-6 gap-1 p-1">
+            <div className="grid grid-cols-7 gap-1 p-1">
                 {monthGridDays.map(day => {
                     const dateKey = format(day, 'yyyy-MM-dd');
                     const isCurrentMonth = day.getMonth() === currentMonth.getMonth();
