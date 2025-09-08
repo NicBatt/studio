@@ -18,13 +18,14 @@ export const decryptContent = (ciphertext: string, secret: string): string => {
     const bytes = CryptoJS.AES.decrypt(ciphertext, secret);
     const originalText = bytes.toString(CryptoJS.enc.Utf8);
     // If decryption results in an empty string, it's likely the secret was wrong
-    // or the ciphertext was invalid. Return the original ciphertext.
+    // or the ciphertext was invalid. Return the original ciphertext so the user can see it.
     if (!originalText) {
         return ciphertext;
     }
     return originalText;
   } catch (error) {
-    console.error("Decryption failed:", error);
+    // This can happen if the content is not an encrypted string (e.g. old notes)
+    // console.error("Decryption failed, returning original text:", error);
     return ciphertext; // Return original text if decryption fails
   }
 };
