@@ -59,11 +59,14 @@ export function DailyNotes({ selectedDate, user, notes, activeNoteId, activeThem
                 </div>
                 <div className="flex-1 text-center">
                     {activeTheme && (
-                        <h2 className="text-2xl font-bold font-headline text-foreground/80">season of {activeTheme.label}</h2>
+                        <h2 className="text-2xl font-bold font-headline text-foreground/80">Season of {activeTheme.label}</h2>
                     )}
                 </div>
                 <div className="w-1/4"></div>
             </header>
+            <div className="p-4 border-b">
+                <h2 className="text-lg font-semibold">{format(selectedDate, "MMMM d, yyyy")}</h2>
+            </div>
             <div className="flex-grow">
                 <NoteEditor 
                     activeNote={activeNote} 

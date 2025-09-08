@@ -157,9 +157,6 @@ export default function Home() {
                         onDayClick={handleDayClick}
                         selectedDate={selectedDate}
                     />
-                    <div className="p-4 text-center border-t">
-                        <h2 className="text-lg font-semibold">{format(selectedDate, "MMMM d, yyyy")}</h2>
-                    </div>
                 </SidebarContent>
                 <SidebarFooter className="p-2">
                     <Button onClick={() => setIsThemeManagerOpen(true)} variant="secondary" className="w-full">
