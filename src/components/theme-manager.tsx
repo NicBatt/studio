@@ -83,6 +83,11 @@ export function ThemeManager({ isOpen, onOpenChange, user, existingThemes }: The
   const decryptedLabel = (encryptedLabel: string) => {
       return decryptContent(encryptedLabel, user.uid);
   }
+  
+  const disabledDays = existingThemes.map(theme => ({
+    from: parseISO(theme.startDate),
+    to: parseISO(theme.endDate)
+  }));
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
@@ -159,6 +164,7 @@ export function ThemeManager({ isOpen, onOpenChange, user, existingThemes }: The
                       selected={dateRange}
                       onSelect={setDateRange}
                       numberOfMonths={2}
+                      disabled={disabledDays}
                     />
                   </PopoverContent>
                 </Popover>
