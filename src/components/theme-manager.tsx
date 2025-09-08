@@ -1,4 +1,3 @@
-
 "use client";
 import { useState, useEffect } from 'react';
 import { User } from 'firebase/auth';
@@ -15,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar as CalendarIcon, Trash2, Pencil, PlusCircle, XCircle } from 'lucide-react';
+import { Calendar as CalendarIcon, Trash2, Pencil } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { addDays, format, parseISO } from 'date-fns';
 import { DateRange, SelectRangeEventHandler } from 'react-day-picker';
@@ -48,10 +47,12 @@ const defaultDateRange = {
     to: addDays(new Date(), 7),
 };
 
+const initialOutcomes = Array(5).fill('');
+
 export function ThemeManager({ isOpen, onOpenChange, user, existingThemes }: ThemeManagerProps) {
   const [label, setLabel] = useState('');
   const [description, setDescription] = useState('');
-  const [outcomes, setOutcomes] = useState<string[]>(['']);
+  const [outcomes, setOutcomes] = useState<string[]>(initialOutcomes);
   const [color, setColor] = useState('#f44336');
   const [dateRange, setDateRange] = useState<DateRange | undefined>(defaultDateRange);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -67,14 +68,14 @@ export function ThemeManager({ isOpen, onOpenChange, user, existingThemes }: The
             from: parseISO(editingTheme.startDate),
             to: parseISO(editingTheme.endDate)
         });
-        setOutcomes(['']); // Don't load tasks as outcomes for editing simplicity
+        setOutcomes(initialOutcomes); // Reset for simplicity, tasks aren't editable here
     }
   }, [editingTheme]);
 
   const resetForm = () => {
     setLabel('');
     setDescription('');
-    setOutcomes(['']);
+    setOutcomes(initialOutcomes);
     setColor('#f44336');
     setDateRange(defaultDateRange);
     setEditingTheme(null);
@@ -86,18 +87,6 @@ export function ThemeManager({ isOpen, onOpenChange, user, existingThemes }: The
     newOutcomes[index] = value;
     setOutcomes(newOutcomes);
   };
-
-  const addOutcomeInput = () => {
-    setOutcomes([...outcomes, '']);
-  };
-
-  const removeOutcomeInput = (index: number) => {
-    if (outcomes.length > 1) {
-        const newOutcomes = outcomes.filter((_, i) => i !== index);
-        setOutcomes(newOutcomes);
-    }
-  };
-
 
   const handleSaveTheme = async () => {
     if (!label || !dateRange?.from || !dateRange?.to) {
@@ -223,31 +212,24 @@ export function ThemeManager({ isOpen, onOpenChange, user, existingThemes }: The
                 placeholder="(Optional)"
               />
             </div>
-             {!editingTheme && (
-              <div className="grid grid-cols-4 items-start gap-4">
-                <Label className="text-right pt-2">
-                  Ideal Outcomes
-                </Label>
-                <div className="col-span-3 space-y-2">
-                  {outcomes.map((outcome, index) => (
-                    <div key={index} className="flex items-center gap-2">
-                      <Input
-                        value={outcome}
-                        onChange={(e) => handleOutcomeChange(index, e.target.value)}
-                        placeholder={`Outcome #${index + 1}`}
-                      />
-                      <Button variant="ghost" size="icon" onClick={() => removeOutcomeInput(index)} disabled={outcomes.length <= 1}>
-                        <XCircle className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ))}
-                  <Button variant="outline" size="sm" onClick={addOutcomeInput}>
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Add Outcome
-                  </Button>
-                </div>
+            <div className="grid grid-cols-4 items-start gap-4">
+              <Label className="text-right pt-2">
+                Ideal Outcomes
+              </Label>
+              <div className="col-span-3 space-y-2">
+                {outcomes.map((outcome, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <Input
+                      value={outcome}
+                      onChange={(e) => handleOutcomeChange(index, e.target.value)}
+                      placeholder={`Outcome #${index + 1}`}
+                      disabled={!!editingTheme}
+                    />
+                  </div>
+                ))}
+                {editingTheme && <p className="text-xs text-muted-foreground">Tasks from outcomes can only be created with a new theme.</p>}
               </div>
-            )}
+            </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="date-range" className="text-right">
                 Date Range
