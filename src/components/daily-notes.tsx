@@ -74,7 +74,7 @@ export function DailyNotes({ selectedDate, user, notes, tasks, activeNoteId, act
             </header>
             <div className="p-4 border-b">
                 <h2 className="text-lg font-semibold">{format(selectedDate, "MMMM d, yyyy")}</h2>
-                <TaskList tasks={tasks} />
+                <TaskList tasks={tasks} selectedDate={selectedDate} />
             </div>
             <div className="flex-grow">
                 <NoteEditor 

@@ -8,27 +8,28 @@ import { ProgressCircle } from './progress-circle';
 
 interface TaskListProps {
   tasks: Task[];
+  selectedDate: Date;
 }
 
-export function TaskList({ tasks }: TaskListProps) {
+export function TaskList({ tasks, selectedDate }: TaskListProps) {
   const [taskProgress, setTaskProgress] = useState<Record<string, TaskProgress>>({});
-  const todayKey = format(new Date(), 'yyyy-MM-dd');
+  const dateKey = format(selectedDate, 'yyyy-MM-dd');
 
   useEffect(() => {
     const allProgress = JSON.parse(localStorage.getItem('allTaskProgress') || '{}');
-    if (allProgress[todayKey]) {
-        setTaskProgress(allProgress[todayKey]);
+    if (allProgress[dateKey]) {
+        setTaskProgress(allProgress[dateKey]);
     } else {
         setTaskProgress({});
     }
-  }, [tasks, todayKey]);
+  }, [tasks, dateKey]);
 
   const handleProgressChange = (taskId: string, newProgress: TaskProgress) => {
-    const newProgressForToday = { ...taskProgress, [taskId]: newProgress };
-    setTaskProgress(newProgressForToday);
+    const newProgressForDay = { ...taskProgress, [taskId]: newProgress };
+    setTaskProgress(newProgressForDay);
     
     const allProgress = JSON.parse(localStorage.getItem('allTaskProgress') || '{}');
-    allProgress[todayKey] = newProgressForToday;
+    allProgress[dateKey] = newProgressForDay;
     localStorage.setItem('allTaskProgress', JSON.stringify(allProgress));
   };
 
