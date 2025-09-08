@@ -80,10 +80,6 @@ export function ThemeManager({ isOpen, onOpenChange, user, existingThemes }: The
     await deleteTheme(themeId);
   }
   
-  const decryptedLabel = (encryptedLabel: string) => {
-      return encryptContent(encryptedLabel, user.uid);
-  }
-  
   const disabledDays = existingThemes.map(theme => ({
     from: parseISO(theme.startDate),
     to: parseISO(theme.endDate)
@@ -197,7 +193,7 @@ export function ThemeManager({ isOpen, onOpenChange, user, existingThemes }: The
                            <div className="flex items-center gap-3">
                              <div className="w-4 h-4 rounded-full" style={{backgroundColor: theme.color}}></div>
                              <div>
-                                 <p className="font-medium">{decryptedLabel(theme.label)}</p>
+                                 <p className="font-medium">{theme.label}</p>
                                  <p className="text-sm text-muted-foreground">{format(parseISO(theme.startDate), 'MMM d')} - {format(parseISO(theme.endDate), 'MMM d, yyyy')}</p>
                              </div>
                            </div>
@@ -211,7 +207,7 @@ export function ThemeManager({ isOpen, onOpenChange, user, existingThemes }: The
                                     <AlertDialogHeader>
                                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                         <AlertDialogDescription>
-                                            This will permanently delete the theme "{decryptedLabel(theme.label)}". This action cannot be undone.
+                                            This will permanently delete the theme "{theme.label}". This action cannot be undone.
                                         </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
@@ -245,3 +241,5 @@ export function ThemeManager({ isOpen, onOpenChange, user, existingThemes }: The
     </Dialog>
   );
 }
+
+    
