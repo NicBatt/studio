@@ -1,6 +1,6 @@
 
 "use client";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { User } from 'firebase/auth';
 import {
   Dialog,
@@ -15,12 +15,12 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar as CalendarIcon, Trash2, Pencil } from 'lucide-react';
+import { Calendar as CalendarIcon, Trash2, Pencil, Upload, Loader2 } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { addDays, format, parseISO } from 'date-fns';
 import { DateRange, SelectRangeEventHandler } from 'react-day-picker';
 import { SketchPicker } from 'react-color';
-import { createTheme, deleteTheme, updateTheme } from '@/lib/firebase';
+import { createTheme, deleteTheme, updateTheme, createTask } from '@/lib/firebase';
 import type { Theme } from '@/lib/types';
 import {
   AlertDialog,
@@ -33,7 +33,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { encryptContent } from '@/lib/encryption';
+import { extractThemeFromImage } from '@/ai/flows/extract-theme-flow';
+import { useToast } from '@/hooks/use-toast';
 
 
 interface ThemeManagerProps {
@@ -55,6 +56,9 @@ export function ThemeManager({ isOpen, onOpenChange, user, existingThemes }: The
   const [dateRange, setDateRange] = useState<DateRange | undefined>(defaultDateRange);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingTheme, setEditingTheme] = useState<Theme | null>(null);
+  const [isExtracting, setIsExtracting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (editingTheme) {
@@ -114,6 +118,56 @@ export function ThemeManager({ isOpen, onOpenChange, user, existingThemes }: The
     resetForm();
     setIsFormOpen(true);
   }
+
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsExtracting(true);
+    try {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = async () => {
+            const photoDataUri = reader.result as string;
+            const result = await extractThemeFromImage({ photoDataUri });
+            
+            setLabel(result.theme);
+            setDescription(result.description);
+            
+            // Create tasks for each outcome
+            const startDate = dateRange?.from || new Date();
+            for (const outcome of result.outcomes) {
+                await createTask({
+                    userId: user.uid,
+                    label: outcome,
+                    recurrence: { type: 'daily' },
+                    startDate: format(startDate, 'yyyy-MM-dd'),
+                    milestoneHalf: '',
+                    milestoneFull: ''
+                });
+            }
+
+            toast({
+                title: 'Theme Extracted!',
+                description: 'The theme and ideal outcomes have been populated.',
+            });
+            setIsFormOpen(true);
+        };
+    } catch (error) {
+        console.error('Error extracting theme from image:', error);
+        toast({
+            variant: 'destructive',
+            title: 'Extraction Failed',
+            description: 'Could not extract theme from the uploaded image.',
+        });
+    } finally {
+        setIsExtracting(false);
+        // Reset file input
+        if(fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    }
+  };
   
   const disabledDays = existingThemes
     .filter(theme => theme.id !== editingTheme?.id) // Exclude current editing theme from disabled dates
@@ -225,7 +279,36 @@ export function ThemeManager({ isOpen, onOpenChange, user, existingThemes }: The
           </div>
         ) : (
           <div className="py-4 space-y-4">
-            <h3 className="font-semibold">Existing Themes</h3>
+             <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleImageUpload}
+              className="hidden"
+              accept="image/*"
+            />
+            <Button 
+                variant="outline" 
+                className="w-full" 
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isExtracting}
+            >
+              {isExtracting ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Upload className="mr-2 h-4 w-4" />
+              )}
+              Upload Worksheet
+            </Button>
+            <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">Or</span>
+                </div>
+            </div>
+            <Button onClick={handleOpenCreate} className="w-full">Create New Theme Manually</Button>
+            <h3 className="font-semibold pt-4">Existing Themes</h3>
             <div className="space-y-2">
                 {existingThemes.length > 0 ? (
                     existingThemes.map(theme => (
@@ -271,15 +354,13 @@ export function ThemeManager({ isOpen, onOpenChange, user, existingThemes }: The
         )}
 
         <DialogFooter>
-          {isFormOpen ? (
+          {isFormOpen && (
             <>
               <Button variant="outline" onClick={resetForm}>
                 Cancel
               </Button>
               <Button onClick={handleSaveTheme}>Save Theme</Button>
             </>
-          ) : (
-            <Button onClick={handleOpenCreate}>Create New Theme</Button>
           )}
         </DialogFooter>
       </DialogContent>
