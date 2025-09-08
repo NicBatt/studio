@@ -67,20 +67,10 @@ export function NoteEditor({ activeNote, onUpdateNote, onNewNote, disabled = fal
     return content.split('\n')[0].trim() || 'Untitled Note';
   }, [activeNote, content]);
 
-  if (disabled || !user) {
+  if (disabled || !user || !activeNote) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-8 animate-fade-in">
-        <h2 className="text-2xl font-headline mb-2">Select a note</h2>
-        <p>Select a note from the list or create a new one.</p>
-      </div>
-    );
-  }
-  
-  if (!activeNote) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-8 animate-fade-in">
-        <h2 className="text-2xl font-headline mb-2">Select a note</h2>
-        <p>Select a note from the list or create a new one.</p>
+      <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground p-8">
+        {/* This space is intentionally left blank */}
       </div>
     );
   }
