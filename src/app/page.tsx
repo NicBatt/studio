@@ -141,7 +141,7 @@ export default function Home() {
       </div>
       <Sidebar>
         <SidebarHeader className="p-2">
-            <div className="flex items-center gap-2 p-2">
+            <div className="flex items-center justify-center gap-2 p-2">
                 <h1 className="text-2xl font-headline font-bold">Theme Journal</h1>
             </div>
         </SidebarHeader>
