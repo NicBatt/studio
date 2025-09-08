@@ -52,21 +52,10 @@ export function DailyNotes({ selectedDate, user, notes, activeNoteId, activeThem
 
     return (
         <div className="h-full flex flex-col">
-            <header className="p-4 border-b flex items-center gap-4">
+            <header className="p-4 border-b flex items-center gap-4" style={{ backgroundColor: activeTheme ? activeTheme.color : 'transparent' }}>
                 {trigger}
                 <div className="flex items-center gap-3">
                     <h1 className="text-2xl font-bold font-headline">{format(selectedDate, "MMMM d, yyyy")}</h1>
-                    {activeTheme && (
-                        <span 
-                            className="font-bold text-xl px-3 py-1 rounded-full"
-                            style={{ 
-                                color: activeTheme.color,
-                                textShadow: '0 0 1px black, 0 0 1px black, 0 0 1px black, 0 0 1px black'
-                            }}
-                        >
-                            {activeTheme.label}
-                        </span>
-                    )}
                 </div>
             </header>
             <div className="flex-grow">

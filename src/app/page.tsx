@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -10,7 +11,7 @@ import { UserProfile } from '@/components/user-profile';
 import { useAuth } from '@/hooks/use-auth';
 import { db, getThemes } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp, onSnapshot, query, where, orderBy, doc, deleteDoc, updateDoc, Timestamp } from "firebase/firestore";
-import { decryptContent, encryptContent } from '@/lib/encryption';
+import { decryptContent } from '@/lib/encryption';
 import { ThemeCalendar } from '@/components/theme-calendar';
 import { Button } from '@/components/ui/button';
 import { BookPlus, FilePlus } from 'lucide-react';
@@ -157,6 +158,11 @@ export default function Home() {
                         onDayClick={handleDayClick}
                         selectedDate={selectedDate}
                     />
+                    {activeTheme && (
+                      <div className="p-4 text-center">
+                        <h3 className="font-bold text-lg text-black">{activeTheme.label}</h3>
+                      </div>
+                    )}
                 </SidebarContent>
                 <SidebarFooter className="p-2">
                     <Button onClick={() => setIsThemeManagerOpen(true)} className="w-full">
