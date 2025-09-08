@@ -3,7 +3,7 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs, onSnapshot, writeBatch, doc, updateDoc } from "firebase/firestore";
-import type { Theme } from '@/lib/types';
+import type { Theme, Task } from '@/lib/types';
 import { toast } from "@/hooks/use-toast";
 import { encryptContent, decryptContent } from "./encryption";
 // TODO: Add SDKs for Firebase products that you want to use
@@ -118,6 +118,39 @@ export const getThemes = (userId: string, callback: (themes: Theme[]) => void) =
             });
         });
         callback(themes);
+    });
+};
+
+export const createTask = async (task: Omit<Task, 'id'>): Promise<string | null> => {
+    // Placeholder for creating a task
+    console.log("Creating task", task);
+    return null;
+}
+
+export const updateTask = async (task: Task): Promise<void> => {
+    // Placeholder for updating a task
+    console.log("Updating task", task);
+}
+
+export const deleteTask = async (taskId: string): Promise<void> => {
+    // Placeholder for deleting a task
+    console.log("Deleting task", taskId);
+}
+
+export const getTasks = (userId: string, callback: (tasks: Task[]) => void) => {
+    // Placeholder for getting tasks
+    const q = query(collection(db, "tasks"), where("userId", "==", userId));
+    return onSnapshot(q, (querySnapshot) => {
+        const tasks: Task[] = [];
+        querySnapshot.forEach((doc) => {
+            const taskData = doc.data() as Omit<Task, 'id'>;
+            tasks.push({ 
+                id: doc.id, 
+                ...taskData,
+                label: decryptContent(taskData.label, userId),
+            });
+        });
+        callback(tasks);
     });
 };
 

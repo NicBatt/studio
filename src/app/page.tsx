@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import type { Note, Theme } from '@/lib/types';
+import type { Note, Theme, Task } from '@/lib/types';
 import { SidebarProvider, Sidebar, SidebarInset, SidebarHeader, SidebarContent, SidebarFooter, SidebarTrigger } from "@/components/ui/sidebar";
 import { DailyNotes } from '@/components/daily-notes';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -18,15 +18,18 @@ import { ThemeManager } from '@/components/theme-manager';
 import { format, parseISO } from 'date-fns';
 import { hexToRgba } from '@/lib/utils';
 import { NoteListDaily } from '@/components/note-list-daily';
+import { TaskManager } from '@/components/task-manager';
 
 
 export default function Home() {
   const { user, loading: authLoading } = useAuth();
   const [themes, setThemes] = useState<Theme[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
   const [isThemeManagerOpen, setIsThemeManagerOpen] = useState(false);
+  const [isTaskManagerOpen, setIsTaskManagerOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   const formattedDate = format(selectedDate, 'yyyy-MM-dd');
@@ -159,9 +162,9 @@ export default function Home() {
                     />
                 </SidebarContent>
                 <SidebarFooter className="p-2">
-                    <Button onClick={() => setIsThemeManagerOpen(true)} variant="secondary" className="w-full">
+                    <Button onClick={() => setIsTaskManagerOpen(true)} variant="secondary" className="w-full">
                         <BookPlus className="mr-2"/>
-                        Manage Themes
+                        Manage Tasks
                     </Button>
                 </SidebarFooter>
             </>
@@ -183,7 +186,7 @@ export default function Home() {
             trigger={<SidebarTrigger />}
         />
       </SidebarInset>
-      {user && <ThemeManager isOpen={isThemeManagerOpen} onOpenChange={setIsThemeManagerOpen} user={user} existingThemes={themes} />}
+      {user && <TaskManager isOpen={isTaskManagerOpen} onOpenChange={setIsTaskManagerOpen} user={user} existingTasks={tasks} />}
     </SidebarProvider>
   );
 }
