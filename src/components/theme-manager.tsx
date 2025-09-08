@@ -223,7 +223,6 @@ export function ThemeManager({ isOpen, onOpenChange, user, existingThemes }: The
                       value={outcome}
                       onChange={(e) => handleOutcomeChange(index, e.target.value)}
                       placeholder={`Outcome #${index + 1}`}
-                      disabled={!!editingTheme}
                     />
                   </div>
                 ))}
