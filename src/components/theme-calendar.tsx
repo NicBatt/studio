@@ -34,7 +34,7 @@ export function ThemeCalendar({ themes, selectedDate, onDayClick }: ThemeCalenda
         const b = parseInt(hex.substring(4, 6), 16);
         
         acc[theme.id] = {
-            backgroundColor: `rgba(${r}, ${g}, ${b}, 0.8)`, // 80% opacity
+            backgroundColor: `rgba(${r}, ${g}, ${b}, 0.5)`, // 50% opacity
             color: 'white',
         };
         return acc;
