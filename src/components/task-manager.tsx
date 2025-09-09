@@ -109,7 +109,6 @@ export function TaskManager({ isOpen, onOpenChange, user, existingTasks }: TaskM
     }
     
     const taskData = {
-      userId: user.uid,
       label,
       startDate: format(startDate, 'yyyy-MM-dd'),
       recurrence,
@@ -118,16 +117,17 @@ export function TaskManager({ isOpen, onOpenChange, user, existingTasks }: TaskM
     };
     
     if (editingTask) {
-      await updateTask({ ...taskData, id: editingTask.id });
+      await updateTask({ ...taskData, id: editingTask.id }, user.uid);
     } else {
-      await createTask(taskData);
+      await createTask(taskData, user.uid);
     }
     
     resetForm();
+    onOpenChange(false);
   };
 
   const handleDeleteTask = async (taskId: string) => {
-    await deleteTask(taskId);
+    await deleteTask(user.uid, taskId);
   }
 
   const handleOpenEdit = (task: Task) => {
@@ -309,3 +309,5 @@ export function TaskManager({ isOpen, onOpenChange, user, existingTasks }: TaskM
     </Dialog>
   );
 }
+
+    

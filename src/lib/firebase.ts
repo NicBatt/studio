@@ -2,8 +2,8 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs, onSnapshot, writeBatch, doc, updateDoc, deleteDoc as deleteDocFirestore } from "firebase/firestore";
-import type { Theme, Task } from '@/lib/types';
+import { getFirestore, collection, addDoc, serverTimestamp, query, where, getDocs, onSnapshot, writeBatch, doc, updateDoc, deleteDoc as deleteDocFirestore, setDoc } from "firebase/firestore";
+import type { Theme, Task, TaskProgressLog, TaskProgress } from '@/lib/types';
 import { toast } from "@/hooks/use-toast";
 import { encryptContent, decryptContent } from "./encryption";
 // TODO: Add SDKs for Firebase products that you want to use
@@ -25,14 +25,14 @@ const auth = getAuth(app);
 const db = getFirestore(app, "theme-journal-database");
 
 
-export const createTheme = async (theme: Omit<Theme, 'id'>): Promise<string | null> => {
+export const createTheme = async (theme: Omit<Theme, 'id' | 'userId'>, userId: string): Promise<string | null> => {
     try {
-        const themesRef = collection(db, "themes");
+        const themesRef = collection(db, "users", userId, "themes");
 
         // Check for overlapping themes
-        const q = query(themesRef, where("userId", "==", theme.userId));
+        const q = query(themesRef);
         const querySnapshot = await getDocs(q);
-        const existingThemes = querySnapshot.docs.map(doc => doc.data() as Theme);
+        const existingThemes = querySnapshot.docs.map(doc => doc.data() as Omit<Theme, 'id'>);
         
         const newStart = new Date(theme.startDate);
         const newEnd = new Date(theme.endDate);
@@ -53,9 +53,9 @@ export const createTheme = async (theme: Omit<Theme, 'id'>): Promise<string | nu
         }
 
         const docRef = await addDoc(themesRef, {
-             ...theme,
-            label: encryptContent(theme.label, theme.userId),
-            description: theme.description ? encryptContent(theme.description, theme.userId) : ''
+            ...theme,
+            label: encryptContent(theme.label, userId),
+            description: theme.description ? encryptContent(theme.description, userId) : ''
         });
         toast({ title: 'Theme Created!', description: `Theme "${theme.label}" was saved.`});
         return docRef.id;
@@ -70,13 +70,15 @@ export const createTheme = async (theme: Omit<Theme, 'id'>): Promise<string | nu
     }
 };
 
-export const updateTheme = async (theme: Theme): Promise<void> => {
+export const updateTheme = async (theme: Omit<Theme, 'userId'>, userId: string): Promise<void> => {
     try {
-        const themeRef = doc(db, 'themes', theme.id);
+        const themeRef = doc(db, 'users', userId, 'themes', theme.id);
         await updateDoc(themeRef, {
-            ...theme,
-            label: encryptContent(theme.label, theme.userId),
-            description: theme.description ? encryptContent(theme.description, theme.userId) : ''
+            label: encryptContent(theme.label, userId),
+            description: theme.description ? encryptContent(theme.description, userId) : '',
+            color: theme.color,
+            startDate: theme.startDate,
+            endDate: theme.endDate,
         });
         toast({ title: 'Theme Updated!', description: `Theme "${theme.label}" was saved.`});
     } catch (error) {
@@ -90,9 +92,9 @@ export const updateTheme = async (theme: Theme): Promise<void> => {
 };
 
 
-export const deleteTheme = async (themeId: string): Promise<void> => {
+export const deleteTheme = async (userId: string, themeId: string): Promise<void> => {
     try {
-        await deleteDocFirestore(doc(db, 'themes', themeId));
+        await deleteDocFirestore(doc(db, 'users', userId, 'themes', themeId));
         toast({ title: 'Theme Deleted' });
     } catch (error) {
         console.error('Error deleting theme:', error);
@@ -105,30 +107,33 @@ export const deleteTheme = async (themeId: string): Promise<void> => {
 };
 
 export const getThemes = (userId: string, callback: (themes: Theme[]) => void) => {
-    const q = query(collection(db, "themes"), where("userId", "==", userId));
+    const q = query(collection(db, "users", userId, "themes"));
     return onSnapshot(q, (querySnapshot) => {
         const themes: Theme[] = [];
         querySnapshot.forEach((doc) => {
-            const themeData = doc.data() as Omit<Theme, 'id'>;
+            const themeData = doc.data();
             themes.push({ 
                 id: doc.id, 
-                ...themeData,
+                userId: userId,
                 label: decryptContent(themeData.label, userId),
-                description: themeData.description ? decryptContent(themeData.description, userId) : undefined
+                description: themeData.description ? decryptContent(themeData.description, userId) : undefined,
+                color: themeData.color,
+                startDate: themeData.startDate,
+                endDate: themeData.endDate,
             });
         });
         callback(themes);
     });
 };
 
-export const createTask = async (task: Omit<Task, 'id'>): Promise<string | null> => {
+export const createTask = async (task: Omit<Task, 'id' | 'userId'>, userId: string): Promise<string | null> => {
     try {
-        const tasksRef = collection(db, "tasks");
+        const tasksRef = collection(db, "users", userId, "tasks");
         const docRef = await addDoc(tasksRef, {
             ...task,
-            label: encryptContent(task.label, task.userId),
-            milestoneHalf: task.milestoneHalf ? encryptContent(task.milestoneHalf, task.userId) : '',
-            milestoneFull: task.milestoneFull ? encryptContent(task.milestoneFull, task.userId) : '',
+            label: encryptContent(task.label, userId),
+            milestoneHalf: task.milestoneHalf ? encryptContent(task.milestoneHalf, userId) : '',
+            milestoneFull: task.milestoneFull ? encryptContent(task.milestoneFull, userId) : '',
         });
         toast({ title: 'Task Created!', description: `Task "${task.label}" was saved.`});
         return docRef.id;
@@ -143,14 +148,15 @@ export const createTask = async (task: Omit<Task, 'id'>): Promise<string | null>
     }
 };
 
-export const updateTask = async (task: Task): Promise<void> => {
+export const updateTask = async (task: Omit<Task, 'userId'>, userId: string): Promise<void> => {
     try {
-        const taskRef = doc(db, 'tasks', task.id);
+        const taskRef = doc(db, 'users', userId, 'tasks', task.id);
         await updateDoc(taskRef, {
-            ...task,
-            label: encryptContent(task.label, task.userId),
-            milestoneHalf: task.milestoneHalf ? encryptContent(task.milestoneHalf, task.userId) : '',
-            milestoneFull: task.milestoneFull ? encryptContent(task.milestoneFull, task.userId) : '',
+            label: encryptContent(task.label, userId),
+            startDate: task.startDate,
+            recurrence: task.recurrence,
+            milestoneHalf: task.milestoneHalf ? encryptContent(task.milestoneHalf, userId) : '',
+            milestoneFull: task.milestoneFull ? encryptContent(task.milestoneFull, userId) : '',
         });
         toast({ title: 'Task Updated!', description: `Task "${task.label}" was saved.`});
     } catch (error) {
@@ -163,9 +169,9 @@ export const updateTask = async (task: Task): Promise<void> => {
     }
 };
 
-export const deleteTask = async (taskId: string): Promise<void> => {
+export const deleteTask = async (userId: string, taskId: string): Promise<void> => {
     try {
-        await deleteDocFirestore(doc(db, 'tasks', taskId));
+        await deleteDocFirestore(doc(db, 'users', userId, 'tasks', taskId));
         toast({ title: 'Task Deleted' });
     } catch (error) {
         console.error('Error deleting task:', error);
@@ -178,15 +184,17 @@ export const deleteTask = async (taskId: string): Promise<void> => {
 };
 
 export const getTasks = (userId: string, callback: (tasks: Task[]) => void) => {
-    const q = query(collection(db, "tasks"), where("userId", "==", userId));
+    const q = query(collection(db, "users", userId, "tasks"));
     return onSnapshot(q, (querySnapshot) => {
         const tasks: Task[] = [];
         querySnapshot.forEach((doc) => {
-            const taskData = doc.data() as Omit<Task, 'id'>;
+            const taskData = doc.data();
             tasks.push({ 
                 id: doc.id, 
-                ...taskData,
+                userId: userId,
                 label: decryptContent(taskData.label, userId),
+                recurrence: taskData.recurrence,
+                startDate: taskData.startDate,
                 milestoneHalf: taskData.milestoneHalf ? decryptContent(taskData.milestoneHalf, userId) : '',
                 milestoneFull: taskData.milestoneFull ? decryptContent(taskData.milestoneFull, userId) : '',
             });
@@ -195,5 +203,39 @@ export const getTasks = (userId: string, callback: (tasks: Task[]) => void) => {
     });
 };
 
+export const getTaskProgress = (userId: string, callback: (progress: TaskProgressLog[]) => void) => {
+    const q = query(collection(db, "users", userId, "taskProgress"));
+    return onSnapshot(q, (querySnapshot) => {
+        const progressLogs: TaskProgressLog[] = [];
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            progressLogs.push({
+                id: doc.id,
+                taskId: data.taskId,
+                date: data.date,
+                progress: data.progress,
+            });
+        });
+        callback(progressLogs);
+    });
+};
+
+export const setTaskProgress = async (userId: string, date: string, taskId: string, progress: TaskProgress) => {
+    try {
+        const progressId = `${date}_${taskId}`;
+        const progressRef = doc(db, "users", userId, "taskProgress", progressId);
+        await setDoc(progressRef, { date, taskId, progress }, { merge: true });
+    } catch (error) {
+        console.error("Error setting task progress:", error);
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Could not save your progress.',
+        });
+    }
+};
+
 
 export { app, auth, db };
+
+    

@@ -8,31 +8,12 @@ import { ProgressCircle } from './progress-circle';
 
 interface TaskListProps {
   tasks: Task[];
-  selectedDate: Date;
+  taskProgress: Record<string, TaskProgress>;
+  onProgressChange: (taskId: string, newProgress: TaskProgress) => void;
 }
 
-export function TaskList({ tasks, selectedDate }: TaskListProps) {
-  const [taskProgress, setTaskProgress] = useState<Record<string, TaskProgress>>({});
-  const dateKey = format(selectedDate, 'yyyy-MM-dd');
-
-  useEffect(() => {
-    const allProgress = JSON.parse(localStorage.getItem('allTaskProgress') || '{}');
-    if (allProgress[dateKey]) {
-        setTaskProgress(allProgress[dateKey]);
-    } else {
-        setTaskProgress({});
-    }
-  }, [tasks, dateKey]);
-
-  const handleProgressChange = (taskId: string, newProgress: TaskProgress) => {
-    const newProgressForDay = { ...taskProgress, [taskId]: newProgress };
-    setTaskProgress(newProgressForDay);
-    
-    const allProgress = JSON.parse(localStorage.getItem('allTaskProgress') || '{}');
-    allProgress[dateKey] = newProgressForDay;
-    localStorage.setItem('allTaskProgress', JSON.stringify(allProgress));
-  };
-
+export function TaskList({ tasks, taskProgress, onProgressChange }: TaskListProps) {
+  
   const getMilestoneText = (task: Task) => {
     const progress = taskProgress[task.id];
     if (progress === 'half' && task.milestoneHalf) {
@@ -56,7 +37,7 @@ export function TaskList({ tasks, selectedDate }: TaskListProps) {
             <div key={task.id} className="flex items-center space-x-3">
                 <ProgressCircle
                     progress={taskProgress[task.id] || 'none'}
-                    onProgressChange={(newProgress) => handleProgressChange(task.id, newProgress)}
+                    onProgressChange={(newProgress) => onProgressChange(task.id, newProgress)}
                 />
                 <label
                     htmlFor={`task-${task.id}`}
@@ -73,3 +54,5 @@ export function TaskList({ tasks, selectedDate }: TaskListProps) {
     </div>
   );
 }
+
+    

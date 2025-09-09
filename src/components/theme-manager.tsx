@@ -1,3 +1,4 @@
+
 "use client";
 import { useState, useEffect } from 'react';
 import { User } from 'firebase/auth';
@@ -19,7 +20,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { addDays, format, parseISO } from 'date-fns';
 import { DateRange, SelectRangeEventHandler } from 'react-day-picker';
 import { SketchPicker } from 'react-color';
-import { createTheme, deleteTheme, updateTheme, createTask } from '@/lib/firebase';
+import { createTheme, deleteTheme, updateTheme } from '@/lib/firebase';
 import type { Theme } from '@/lib/types';
 import {
   AlertDialog,
@@ -99,7 +100,6 @@ export function ThemeManager({ isOpen, onOpenChange, user, existingThemes }: The
     }
     
     const themeData = {
-      userId: user.uid,
       label,
       description,
       color,
@@ -108,38 +108,17 @@ export function ThemeManager({ isOpen, onOpenChange, user, existingThemes }: The
     };
     
     if (editingTheme) {
-        await updateTheme({ ...themeData, id: editingTheme.id });
+        await updateTheme({ ...themeData, id: editingTheme.id }, user.uid);
     } else {
-        const newThemeId = await createTheme(themeData);
-        if (newThemeId) {
-            // Create tasks for each outcome
-            const startDate = dateRange?.from || new Date();
-            const validOutcomes = outcomes.map(o => o.trim()).filter(o => o !== '');
-
-            for (const outcome of validOutcomes) {
-                await createTask({
-                    userId: user.uid,
-                    label: outcome,
-                    recurrence: { type: 'daily' },
-                    startDate: format(startDate, 'yyyy-MM-dd'),
-                    milestoneHalf: '',
-                    milestoneFull: ''
-                });
-            }
-             if (validOutcomes.length > 0) {
-                toast({
-                    title: 'Tasks Created!',
-                    description: `Created ${validOutcomes.length} tasks for your new theme.`,
-                });
-            }
-        }
+        await createTheme(themeData, user.uid);
     }
     
     resetForm();
+    onOpenChange(false);
   };
 
   const handleDeleteTheme = async (themeId: string) => {
-    await deleteTheme(themeId);
+    await deleteTheme(user.uid, themeId);
   }
 
   const handleOpenEdit = (theme: Theme) => {
@@ -338,3 +317,5 @@ export function ThemeManager({ isOpen, onOpenChange, user, existingThemes }: The
     </Dialog>
   );
 }
+
+    

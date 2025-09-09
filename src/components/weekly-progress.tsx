@@ -1,38 +1,40 @@
 
 "use client";
 
-import type { Task, TaskProgress } from '@/lib/types';
+import type { Task, TaskProgress, TaskProgressLog } from '@/lib/types';
 import { useState, useEffect, useMemo } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { WeeklyView } from './weekly-view';
 import { MonthlyView } from './monthly-view';
 import { YearlyView } from './yearly-view';
 import { SheetHeader, SheetTitle, SheetDescription } from './ui/sheet';
-import { parseISO } from 'date-fns';
+import { setTaskProgress } from '@/lib/firebase';
+import { User } from 'firebase/auth';
+import { format } from 'date-fns';
 
 interface WeeklyProgressProps {
   allTasks: Task[];
+  allProgressLogs: TaskProgressLog[];
+  user: User | null;
 }
 
 export type AllProgress = Record<string, Record<string, TaskProgress>>; // { 'YYYY-MM-DD': { 'taskId': 'full' } }
 
-export function WeeklyProgress({ allTasks }: WeeklyProgressProps) {
-  const [allProgress, setAllProgress] = useState<AllProgress>({});
-
-  useEffect(() => {
-    const storedProgress = JSON.parse(localStorage.getItem('allTaskProgress') || '{}');
-    setAllProgress(storedProgress);
-  }, []);
+export function WeeklyProgress({ allTasks, allProgressLogs, user }: WeeklyProgressProps) {
+  
+  const allProgress = useMemo(() => {
+    return allProgressLogs.reduce((acc, log) => {
+        if (!acc[log.date]) {
+            acc[log.date] = {};
+        }
+        acc[log.date][log.taskId] = log.progress;
+        return acc;
+    }, {} as AllProgress);
+  }, [allProgressLogs]);
 
   const handleProgressChange = (dateKey: string, taskId: string, newProgress: TaskProgress) => {
-    const newAllProgress = { ...allProgress };
-    if (!newAllProgress[dateKey]) {
-      newAllProgress[dateKey] = {};
-    }
-    newAllProgress[dateKey][taskId] = newProgress;
-    
-    setAllProgress(newAllProgress);
-    localStorage.setItem('allTaskProgress', JSON.stringify(newAllProgress));
+    if (!user) return;
+    setTaskProgress(user.uid, dateKey, taskId, newProgress);
   };
   
   const uniqueTasks = useMemo(() => {
@@ -92,3 +94,5 @@ export function WeeklyProgress({ allTasks }: WeeklyProgressProps) {
     </div>
   );
 }
+
+    

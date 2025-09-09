@@ -3,13 +3,13 @@
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
-import type { Note, Theme, Task } from '@/lib/types';
+import type { Note, Theme, Task, TaskProgressLog, TaskProgress } from '@/lib/types';
 import { SidebarProvider, Sidebar, SidebarInset, SidebarHeader, SidebarContent, SidebarFooter, SidebarTrigger } from "@/components/ui/sidebar";
 import { DailyNotes } from '@/components/daily-notes';
 import { Skeleton } from '@/components/ui/skeleton';
 import { UserProfile } from '@/components/user-profile';
 import { useAuth } from '@/hooks/use-auth';
-import { db, getThemes, getTasks } from '@/lib/firebase';
+import { db, getThemes, getTasks, getTaskProgress, setTaskProgress } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp, onSnapshot, query, where, orderBy, doc, deleteDoc, updateDoc, Timestamp } from "firebase/firestore";
 import { decryptContent, encryptContent } from '@/lib/encryption';
 import { ThemeCalendar } from '@/components/theme-calendar';
@@ -29,6 +29,7 @@ export default function Home() {
   const [themes, setThemes] = useState<Theme[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [taskProgress, setTaskProgress] = useState<TaskProgressLog[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
   const [isThemeManagerOpen, setIsThemeManagerOpen] = useState(false);
@@ -57,9 +58,18 @@ export default function Home() {
     if (!selectedDate) return [];
     return tasks.filter(task => isTaskForDate(task, selectedDate));
   }, [tasks, selectedDate]);
+  
+  const progressForSelectedDate = useMemo(() => {
+    if (!formattedDate) return {};
+    const dailyLogs = taskProgress.filter(p => p.date === formattedDate);
+    return dailyLogs.reduce((acc, log) => {
+        acc[log.taskId] = log.progress;
+        return acc;
+    }, {} as Record<string, TaskProgress>);
+  }, [taskProgress, formattedDate]);
 
 
-  // Load themes and tasks from Firestore
+  // Load data from Firestore
   useEffect(() => {
     if (authLoading) {
       setIsLoading(true);
@@ -68,6 +78,7 @@ export default function Home() {
     if (!user) {
       setThemes([]);
       setTasks([]);
+      setTaskProgress([]);
       setIsLoading(false);
       return;
     }
@@ -81,11 +92,16 @@ export default function Home() {
     const unsubscribeTasks = getTasks(user.uid, (tasksData) => {
         setTasks(tasksData);
     });
+    
+    const unsubscribeProgress = getTaskProgress(user.uid, (progressData) => {
+        setTaskProgress(progressData);
+    });
 
 
     return () => {
         unsubscribeThemes();
         unsubscribeTasks();
+        unsubscribeProgress();
     };
   }, [user, authLoading]);
 
@@ -96,8 +112,7 @@ export default function Home() {
         return;
       }
       const q = query(
-          collection(db, "notes"),
-          where("userId", "==", user.uid),
+          collection(db, "users", user.uid, "notes"),
           where("date", "==", formattedDate),
           orderBy("lastModified", "desc")
       );
@@ -110,7 +125,6 @@ export default function Home() {
                   id: doc.id,
                   content: decryptContent(data.content, user.uid),
                   lastModified: (data.lastModified as Timestamp)?.toMillis() || Date.now(),
-                  userId: data.userId,
                   date: data.date,
               });
           });
@@ -134,15 +148,19 @@ export default function Home() {
     setSelectedDate(day);
     setActiveNoteId(null);
   };
+  
+  const handleProgressChange = async (taskId: string, newProgress: TaskProgress) => {
+    if (!user || !formattedDate) return;
+    await setTaskProgress(user.uid, formattedDate, taskId, newProgress);
+  };
 
   const handleNewNote = async () => {
         if (!user || !formattedDate) return;
         try {
             const encryptedContent = encryptContent('New Note', user.uid);
-            const docRef = await addDoc(collection(db, "notes"), {
+            const docRef = await addDoc(collection(db, "users", user.uid, "notes"), {
                 content: encryptedContent,
                 lastModified: serverTimestamp(),
-                userId: user.uid,
                 date: formattedDate,
             });
             setActiveNoteId(docRef.id);
@@ -152,8 +170,9 @@ export default function Home() {
     };
 
     const handleDeleteNote = async (id: string) => {
+        if (!user) return;
         try {
-            await deleteDoc(doc(db, "notes", id));
+            await deleteDoc(doc(db, "users", user.uid, "notes", id));
             if (activeNoteId === id) {
                  const remainingNotes = notes.filter(n => n.id !== id);
                  setActiveNoteId(remainingNotes.length > 0 ? remainingNotes[0].id : null);
@@ -215,7 +234,7 @@ export default function Home() {
                         </Button>
                       </SheetTrigger>
                       <SheetContent side="bottom" className="h-4/5">
-                        <WeeklyProgress allTasks={tasks} />
+                        <WeeklyProgress allTasks={tasks} allProgressLogs={taskProgress} user={user} />
                       </SheetContent>
                     </Sheet>
                 </SidebarFooter>
@@ -233,6 +252,8 @@ export default function Home() {
             user={user}
             notes={notes}
             tasks={todaysTasks}
+            taskProgress={progressForSelectedDate}
+            onProgressChange={handleProgressChange}
             activeTheme={activeTheme}
             activeNoteId={activeNoteId}
             onNewNote={handleNewNote}
@@ -244,3 +265,5 @@ export default function Home() {
     </SidebarProvider>
   );
 }
+
+    
