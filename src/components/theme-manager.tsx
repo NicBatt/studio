@@ -114,10 +114,12 @@ export function ThemeManager({ isOpen, onOpenChange, user, existingThemes }: The
     }
     
     resetForm();
+    onOpenChange(false);
   };
 
   const handleDeleteTheme = async (themeId: string) => {
-    await deleteTheme(themeId);
+    if (!user) return;
+    await deleteTheme(themeId, user.uid);
   }
 
   const handleOpenEdit = (theme: Theme) => {
