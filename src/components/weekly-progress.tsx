@@ -11,7 +11,6 @@ import { YearlyView } from './yearly-view';
 import { SheetHeader, SheetTitle, SheetDescription } from './ui/sheet';
 import { setTaskProgress } from '@/lib/firebase';
 import { User } from 'firebase/auth';
-import { format } from 'date-fns';
 
 interface WeeklyProgressProps {
   allTasks: Task[];
@@ -33,9 +32,9 @@ export function WeeklyProgress({ allTasks, allProgressLogs, user }: WeeklyProgre
     }, {} as AllProgress);
   }, [allProgressLogs]);
 
-  const handleProgressChange = (dateKey: string, taskId: string, newProgress: TaskProgress) => {
+  const handleProgressChange = async (dateKey: string, taskId: string, newProgress: TaskProgress) => {
     if (!user) return;
-    setTaskProgress(user.uid, dateKey, taskId, newProgress);
+    await setTaskProgress(user.uid, dateKey, taskId, newProgress);
   };
   
   const uniqueTasks = useMemo(() => {

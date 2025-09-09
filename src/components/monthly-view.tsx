@@ -94,5 +94,3 @@ export function MonthlyView({ allTasks, allProgress, onProgressChange }: Monthly
     </div>
   );
 }
-
-    
