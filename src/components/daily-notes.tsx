@@ -90,5 +90,3 @@ export function DailyNotes({ selectedDate, user, notes, tasks, taskProgress, onP
         </div>
     );
 }
-
-    

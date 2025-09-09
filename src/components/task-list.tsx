@@ -16,10 +16,10 @@ export function TaskList({ tasks, taskProgress, onProgressChange }: TaskListProp
   
   const getMilestoneText = (task: Task) => {
     const progress = taskProgress[task.id];
-    if (progress === 'half' && task.milestoneHalf) {
+    if (progress === 1 && task.milestoneHalf) { // 1 is half
       return ` — ${task.milestoneHalf}`;
     }
-    if (progress === 'full' && task.milestoneFull) {
+    if (progress === 2 && task.milestoneFull) { // 2 is full
       return ` — ${task.milestoneFull}`;
     }
     return '';
@@ -36,7 +36,7 @@ export function TaskList({ tasks, taskProgress, onProgressChange }: TaskListProp
         {tasks.map(task => (
             <div key={task.id} className="flex items-center space-x-3">
                 <ProgressCircle
-                    progress={taskProgress[task.id] || 'none'}
+                    progress={taskProgress[task.id] || 0}
                     onProgressChange={(newProgress) => onProgressChange(task.id, newProgress)}
                 />
                 <label
@@ -54,5 +54,3 @@ export function TaskList({ tasks, taskProgress, onProgressChange }: TaskListProp
     </div>
   );
 }
-
-    

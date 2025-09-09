@@ -244,7 +244,7 @@ export const setTaskProgress = async (userId: string, date: string, taskId: stri
     try {
         const progressId = `${date}_${taskId}`;
         const progressRef = doc(db, "users", userId, "taskProgress", progressId);
-        await setDoc(progressRef, { date, taskId, progress }, { merge: true });
+        await setDoc(progressRef, { userId, date, taskId, progress }, { merge: true });
     } catch (error) {
         console.error("Error setting task progress:", error);
         toast({

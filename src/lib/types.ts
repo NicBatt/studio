@@ -35,7 +35,7 @@ export type Task = {
     milestoneFull?: string;
 };
 
-export type TaskProgress = 'none' | 'half' | 'full';
+export type TaskProgress = 0 | 1 | 2; // 0: none, 1: half, 2: full
 
 export type TaskProgressLog = {
     id: string; // e.g. '2024-01-15_taskId123'

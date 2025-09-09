@@ -79,7 +79,7 @@ export function MonthlyView({ allTasks, allProgress, onProgressChange }: Monthly
                                     {tasksForDay.map(task => (
                                          <ProgressCircle
                                             key={task.id}
-                                            progress={allProgress[dateKey]?.[task.id] || 'none'}
+                                            progress={allProgress[dateKey]?.[task.id] || 0}
                                             onProgressChange={(newProgress) => onProgressChange(dateKey, task.id, newProgress)}
                                             size="small"
                                         />

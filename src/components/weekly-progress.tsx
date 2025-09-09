@@ -18,7 +18,7 @@ interface WeeklyProgressProps {
   user: User | null;
 }
 
-export type AllProgress = Record<string, Record<string, TaskProgress>>; // { 'YYYY-MM-DD': { 'taskId': 'full' } }
+export type AllProgress = Record<string, Record<string, TaskProgress>>; // { 'YYYY-MM-DD': { 'taskId': 2 } }
 
 export function WeeklyProgress({ allTasks, allProgressLogs, user }: WeeklyProgressProps) {
   

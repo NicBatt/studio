@@ -86,7 +86,7 @@ export function WeeklyView({ allTasks, allProgress, onProgressChange, uniqueTask
                                             return <td key={dateKey} className="p-2 align-middle text-center w-20"></td>;
                                         }
 
-                                        const progress = allProgress[dateKey]?.[task.id] || 'none';
+                                        const progress = allProgress[dateKey]?.[task.id] || 0;
 
                                         return (
                                             <td key={dateKey} className="p-2 align-middle text-center w-20">

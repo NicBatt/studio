@@ -27,8 +27,6 @@ interface ProgressCircleProps extends VariantProps<typeof progressCircleVariants
     className?: string;
 }
 
-const progressStates: TaskProgress[] = ['none', 'half', 'full'];
-
 const HalfCircle = ({ size }: { size: "default" | "small" | null | undefined}) => (
     <svg 
         viewBox="0 0 24 24" 
@@ -51,31 +49,32 @@ const HalfCircle = ({ size }: { size: "default" | "small" | null | undefined}) =
 export function ProgressCircle({ progress, onProgressChange, size, className }: ProgressCircleProps) {
 
     const handleClick = () => {
-        const currentIndex = progressStates.indexOf(progress);
-        const nextIndex = (currentIndex + 1) % progressStates.length;
-        onProgressChange(progressStates[nextIndex]);
+        const newProgress = ((progress + 1) % 3) as TaskProgress;
+        onProgressChange(newProgress);
     }
 
     const iconSize = size === "small" ? "h-5 w-5" : "h-6 w-6";
 
     const renderIcon = () => {
         switch (progress) {
-            case 'none':
+            case 0: // none
                 return <Circle className={cn("text-muted-foreground/50", iconSize)} />;
-            case 'half':
+            case 1: // half
                 return <HalfCircle size={size} />;
-            case 'full':
+            case 2: // full
                 return <Circle className={cn("text-green-500 fill-current", iconSize)} />;
             default:
                 return <Circle className={cn("text-muted-foreground/50", iconSize)} />;
         }
     }
 
+    const progressLabels = ['Not started', 'In progress', 'Completed'];
+
     return (
         <button
             onClick={handleClick}
             className={cn(progressCircleVariants({ size }), className)}
-            aria-label={`Task progress: ${progress}. Click to change.`}
+            aria-label={`Task progress: ${progressLabels[progress]}. Click to change.`}
         >
             {renderIcon()}
         </button>

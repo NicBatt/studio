@@ -38,8 +38,8 @@ export function YearlyView({ allTasks, allProgress }: YearlyViewProps) {
 
     const totalScore = tasksForDay.reduce((sum, task) => {
         const progress = progressForDay[task.id];
-        if (progress === 'full') return sum + 1;
-        if (progress === 'half') return sum + 0.5;
+        if (progress === 2) return sum + 1; // full
+        if (progress === 1) return sum + 0.5; // half
         return sum;
     }, 0);
 
