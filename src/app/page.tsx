@@ -75,21 +75,35 @@ export default function Home() {
       setIsLoading(false);
       return;
     }
-
+    
     setIsLoading(true);
+    let themesLoaded = false;
+    let tasksLoaded = false;
+    let progressLoaded = false;
+
+    const checkAllDataLoaded = () => {
+        if (themesLoaded && tasksLoaded && progressLoaded) {
+            setIsLoading(false);
+        }
+    }
+
     const unsubscribeThemes = getThemes(user.uid, (themesData) => {
       setThemes(themesData);
-      setIsLoading(false);
+      themesLoaded = true;
+      checkAllDataLoaded();
     });
 
     const unsubscribeTasks = getTasks(user.uid, (tasksData) => {
         setTasks(tasksData);
+        tasksLoaded = true;
+        checkAllDataLoaded();
     });
     
     const unsubscribeProgress = getTaskProgress(user.uid, (progressData) => {
         setTaskProgress(progressData);
+        progressLoaded = true;
+        checkAllDataLoaded();
     });
-
 
     return () => {
         unsubscribeThemes();
