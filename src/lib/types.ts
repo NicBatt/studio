@@ -1,4 +1,5 @@
 
+
 import type { Timestamp } from 'firebase/firestore';
 
 export type Note = {
@@ -38,9 +39,8 @@ export type TaskProgress = 'none' | 'half' | 'full';
 
 export type TaskProgressLog = {
     id: string; // e.g. '2024-01-15_taskId123'
+    userId: string;
     taskId: string;
     date: string; // YYYY-MM-DD
     progress: TaskProgress;
 };
-
-    

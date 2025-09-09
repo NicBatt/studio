@@ -123,11 +123,10 @@ export function TaskManager({ isOpen, onOpenChange, user, existingTasks }: TaskM
     }
     
     resetForm();
-    onOpenChange(false);
   };
 
   const handleDeleteTask = async (taskId: string) => {
-    await deleteTask(user.uid, taskId);
+    await deleteTask(taskId);
   }
 
   const handleOpenEdit = (task: Task) => {
@@ -309,5 +308,3 @@ export function TaskManager({ isOpen, onOpenChange, user, existingTasks }: TaskM
     </Dialog>
   );
 }
-
-    

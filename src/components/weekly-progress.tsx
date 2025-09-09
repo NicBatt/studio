@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import type { Task, TaskProgress, TaskProgressLog } from '@/lib/types';
@@ -94,5 +95,3 @@ export function WeeklyProgress({ allTasks, allProgressLogs, user }: WeeklyProgre
     </div>
   );
 }
-
-    

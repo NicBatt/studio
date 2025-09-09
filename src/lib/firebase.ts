@@ -1,4 +1,5 @@
 
+
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
@@ -25,12 +26,12 @@ const auth = getAuth(app);
 const db = getFirestore(app, "theme-journal-database");
 
 
-export const createTheme = async (theme: Omit<Theme, 'id' | 'userId'>, userId: string): Promise<string | null> => {
+export const createTheme = async (theme: Omit<Theme, 'id'>, userId: string): Promise<string | null> => {
     try {
-        const themesRef = collection(db, "users", userId, "themes");
+        const themesRef = collection(db, "themes");
 
         // Check for overlapping themes
-        const q = query(themesRef);
+        const q = query(themesRef, where("userId", "==", userId));
         const querySnapshot = await getDocs(q);
         const existingThemes = querySnapshot.docs.map(doc => doc.data() as Omit<Theme, 'id'>);
         
@@ -54,6 +55,7 @@ export const createTheme = async (theme: Omit<Theme, 'id' | 'userId'>, userId: s
 
         const docRef = await addDoc(themesRef, {
             ...theme,
+            userId,
             label: encryptContent(theme.label, userId),
             description: theme.description ? encryptContent(theme.description, userId) : ''
         });
@@ -72,7 +74,7 @@ export const createTheme = async (theme: Omit<Theme, 'id' | 'userId'>, userId: s
 
 export const updateTheme = async (theme: Omit<Theme, 'userId'>, userId: string): Promise<void> => {
     try {
-        const themeRef = doc(db, 'users', userId, 'themes', theme.id);
+        const themeRef = doc(db, 'themes', theme.id);
         await updateDoc(themeRef, {
             label: encryptContent(theme.label, userId),
             description: theme.description ? encryptContent(theme.description, userId) : '',
@@ -92,9 +94,9 @@ export const updateTheme = async (theme: Omit<Theme, 'userId'>, userId: string):
 };
 
 
-export const deleteTheme = async (userId: string, themeId: string): Promise<void> => {
+export const deleteTheme = async (themeId: string): Promise<void> => {
     try {
-        await deleteDocFirestore(doc(db, 'users', userId, 'themes', themeId));
+        await deleteDocFirestore(doc(db, 'themes', themeId));
         toast({ title: 'Theme Deleted' });
     } catch (error) {
         console.error('Error deleting theme:', error);
@@ -107,7 +109,7 @@ export const deleteTheme = async (userId: string, themeId: string): Promise<void
 };
 
 export const getThemes = (userId: string, callback: (themes: Theme[]) => void) => {
-    const q = query(collection(db, "users", userId, "themes"));
+    const q = query(collection(db, "themes"), where("userId", "==", userId));
     return onSnapshot(q, (querySnapshot) => {
         const themes: Theme[] = [];
         querySnapshot.forEach((doc) => {
@@ -128,9 +130,10 @@ export const getThemes = (userId: string, callback: (themes: Theme[]) => void) =
 
 export const createTask = async (task: Omit<Task, 'id' | 'userId'>, userId: string): Promise<string | null> => {
     try {
-        const tasksRef = collection(db, "users", userId, "tasks");
+        const tasksRef = collection(db, "tasks");
         const docRef = await addDoc(tasksRef, {
             ...task,
+            userId,
             label: encryptContent(task.label, userId),
             milestoneHalf: task.milestoneHalf ? encryptContent(task.milestoneHalf, userId) : '',
             milestoneFull: task.milestoneFull ? encryptContent(task.milestoneFull, userId) : '',
@@ -150,7 +153,7 @@ export const createTask = async (task: Omit<Task, 'id' | 'userId'>, userId: stri
 
 export const updateTask = async (task: Omit<Task, 'userId'>, userId: string): Promise<void> => {
     try {
-        const taskRef = doc(db, 'users', userId, 'tasks', task.id);
+        const taskRef = doc(db, 'tasks', task.id);
         await updateDoc(taskRef, {
             label: encryptContent(task.label, userId),
             startDate: task.startDate,
@@ -169,9 +172,9 @@ export const updateTask = async (task: Omit<Task, 'userId'>, userId: string): Pr
     }
 };
 
-export const deleteTask = async (userId: string, taskId: string): Promise<void> => {
+export const deleteTask = async (taskId: string): Promise<void> => {
     try {
-        await deleteDocFirestore(doc(db, 'users', userId, 'tasks', taskId));
+        await deleteDocFirestore(doc(db, 'tasks', taskId));
         toast({ title: 'Task Deleted' });
     } catch (error) {
         console.error('Error deleting task:', error);
@@ -184,7 +187,7 @@ export const deleteTask = async (userId: string, taskId: string): Promise<void> 
 };
 
 export const getTasks = (userId: string, callback: (tasks: Task[]) => void) => {
-    const q = query(collection(db, "users", userId, "tasks"));
+    const q = query(collection(db, "tasks"), where("userId", "==", userId));
     return onSnapshot(q, (querySnapshot) => {
         const tasks: Task[] = [];
         querySnapshot.forEach((doc) => {
@@ -204,13 +207,14 @@ export const getTasks = (userId: string, callback: (tasks: Task[]) => void) => {
 };
 
 export const getTaskProgress = (userId: string, callback: (progress: TaskProgressLog[]) => void) => {
-    const q = query(collection(db, "users", userId, "taskProgress"));
+    const q = query(collection(db, "taskProgress"), where("userId", "==", userId));
     return onSnapshot(q, (querySnapshot) => {
         const progressLogs: TaskProgressLog[] = [];
         querySnapshot.forEach((doc) => {
             const data = doc.data();
             progressLogs.push({
                 id: doc.id,
+                userId: data.userId,
                 taskId: data.taskId,
                 date: data.date,
                 progress: data.progress,
@@ -223,8 +227,8 @@ export const getTaskProgress = (userId: string, callback: (progress: TaskProgres
 export const setTaskProgress = async (userId: string, date: string, taskId: string, progress: TaskProgress) => {
     try {
         const progressId = `${date}_${taskId}`;
-        const progressRef = doc(db, "users", userId, "taskProgress", progressId);
-        await setDoc(progressRef, { date, taskId, progress }, { merge: true });
+        const progressRef = doc(db, "taskProgress", progressId);
+        await setDoc(progressRef, { userId, date, taskId, progress }, { merge: true });
     } catch (error) {
         console.error("Error setting task progress:", error);
         toast({
@@ -237,5 +241,3 @@ export const setTaskProgress = async (userId: string, date: string, taskId: stri
 
 
 export { app, auth, db };
-
-    

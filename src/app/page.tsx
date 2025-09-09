@@ -30,22 +30,16 @@ export default function Home() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [taskProgress, setTaskProgress] = useState<TaskProgressLog[]>([]);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
   const [isThemeManagerOpen, setIsThemeManagerOpen] = useState(false);
   const [isTaskManagerOpen, setIsTaskManagerOpen] = useState(false);
   const [isProgressSheetOpen, setProgressSheetOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Set selected date on client-side to avoid hydration mismatch
-  useEffect(() => {
-    setSelectedDate(new Date());
-  }, []);
-
-  const formattedDate = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : null;
+  const formattedDate = format(selectedDate, 'yyyy-MM-dd');
   
   const activeTheme = useMemo(() => {
-      if (!selectedDate) return undefined;
       return themes.find(theme => {
         const start = parseISO(theme.startDate);
         const end = parseISO(theme.endDate);
@@ -55,7 +49,6 @@ export default function Home() {
 
 
   const todaysTasks = useMemo(() => {
-    if (!selectedDate) return [];
     return tasks.filter(task => isTaskForDate(task, selectedDate));
   }, [tasks, selectedDate]);
   
@@ -107,12 +100,13 @@ export default function Home() {
 
   // Load notes for the selected date
   useEffect(() => {
-      if (!user || !formattedDate) {
+      if (!user) {
         setNotes([]);
         return;
       }
       const q = query(
-          collection(db, "users", user.uid, "notes"),
+          collection(db, "notes"),
+          where("userId", "==", user.uid),
           where("date", "==", formattedDate),
           orderBy("lastModified", "desc")
       );
@@ -150,15 +144,16 @@ export default function Home() {
   };
   
   const handleProgressChange = async (taskId: string, newProgress: TaskProgress) => {
-    if (!user || !formattedDate) return;
+    if (!user) return;
     await setTaskProgress(user.uid, formattedDate, taskId, newProgress);
   };
 
   const handleNewNote = async () => {
-        if (!user || !formattedDate) return;
+        if (!user) return;
         try {
             const encryptedContent = encryptContent('New Note', user.uid);
-            const docRef = await addDoc(collection(db, "users", user.uid, "notes"), {
+            const docRef = await addDoc(collection(db, "notes"), {
+                userId: user.uid,
                 content: encryptedContent,
                 lastModified: serverTimestamp(),
                 date: formattedDate,
@@ -172,7 +167,7 @@ export default function Home() {
     const handleDeleteNote = async (id: string) => {
         if (!user) return;
         try {
-            await deleteDoc(doc(db, "users", user.uid, "notes", id));
+            await deleteDoc(doc(db, "notes", id));
             if (activeNoteId === id) {
                  const remainingNotes = notes.filter(n => n.id !== id);
                  setActiveNoteId(remainingNotes.length > 0 ? remainingNotes[0].id : null);
@@ -181,15 +176,6 @@ export default function Home() {
             console.error("Error deleting note:", error);
         }
     };
-
-
-  if (!selectedDate) {
-    return (
-        <div className="flex h-screen w-full items-center justify-center">
-            <Skeleton className="h-full w-full" />
-        </div>
-    );
-  }
 
 
   return (
@@ -265,5 +251,3 @@ export default function Home() {
     </SidebarProvider>
   );
 }
-
-    

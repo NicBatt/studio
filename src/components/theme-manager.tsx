@@ -114,11 +114,10 @@ export function ThemeManager({ isOpen, onOpenChange, user, existingThemes }: The
     }
     
     resetForm();
-    onOpenChange(false);
   };
 
   const handleDeleteTheme = async (themeId: string) => {
-    await deleteTheme(user.uid, themeId);
+    await deleteTheme(themeId);
   }
 
   const handleOpenEdit = (theme: Theme) => {
@@ -317,5 +316,3 @@ export function ThemeManager({ isOpen, onOpenChange, user, existingThemes }: The
     </Dialog>
   );
 }
-
-    
