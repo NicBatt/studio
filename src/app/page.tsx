@@ -105,8 +105,7 @@ export default function Home() {
         return;
       }
       const q = query(
-          collection(db, "notes"),
-          where("userId", "==", user.uid),
+          collection(db, "users", user.uid, "notes"),
           where("date", "==", formattedDate),
           orderBy("lastModified", "desc")
       );
@@ -152,8 +151,7 @@ export default function Home() {
         if (!user) return;
         try {
             const encryptedContent = encryptContent('New Note', user.uid);
-            const docRef = await addDoc(collection(db, "notes"), {
-                userId: user.uid,
+            const docRef = await addDoc(collection(db, "users", user.uid, "notes"), {
                 content: encryptedContent,
                 lastModified: serverTimestamp(),
                 date: formattedDate,
@@ -167,7 +165,7 @@ export default function Home() {
     const handleDeleteNote = async (id: string) => {
         if (!user) return;
         try {
-            await deleteDoc(doc(db, "notes", id));
+            await deleteDoc(doc(db, "users", user.uid, "notes", id));
             if (activeNoteId === id) {
                  const remainingNotes = notes.filter(n => n.id !== id);
                  setActiveNoteId(remainingNotes.length > 0 ? remainingNotes[0].id : null);
