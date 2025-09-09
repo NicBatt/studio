@@ -29,22 +29,32 @@ export default function Home() {
   const [themes, setThemes] = useState<Theme[]>([]);
   const [notes, setNotes] = useState<Note[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
   const [isThemeManagerOpen, setIsThemeManagerOpen] = useState(false);
   const [isTaskManagerOpen, setIsTaskManagerOpen] = useState(false);
   const [isProgressSheetOpen, setProgressSheetOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  const formattedDate = format(selectedDate, 'yyyy-MM-dd');
+  // Set selected date on client-side to avoid hydration mismatch
+  useEffect(() => {
+    setSelectedDate(new Date());
+  }, []);
+
+  const formattedDate = selectedDate ? format(selectedDate, 'yyyy-MM-dd') : null;
   
-  const activeTheme = themes.find(theme => {
-    const start = parseISO(theme.startDate);
-    const end = parseISO(theme.endDate);
-    return selectedDate >= start && selectedDate <= end;
-  });
+  const activeTheme = useMemo(() => {
+      if (!selectedDate) return undefined;
+      return themes.find(theme => {
+        const start = parseISO(theme.startDate);
+        const end = parseISO(theme.endDate);
+        return selectedDate >= start && selectedDate <= end;
+      });
+  }, [themes, selectedDate]);
+
 
   const todaysTasks = useMemo(() => {
+    if (!selectedDate) return [];
     return tasks.filter(task => isTaskForDate(task, selectedDate));
   }, [tasks, selectedDate]);
 
@@ -81,7 +91,7 @@ export default function Home() {
 
   // Load notes for the selected date
   useEffect(() => {
-      if (!user) {
+      if (!user || !formattedDate) {
         setNotes([]);
         return;
       }
@@ -126,7 +136,7 @@ export default function Home() {
   };
 
   const handleNewNote = async () => {
-        if (!user) return;
+        if (!user || !formattedDate) return;
         try {
             const encryptedContent = encryptContent('New Note', user.uid);
             const docRef = await addDoc(collection(db, "notes"), {
@@ -152,6 +162,15 @@ export default function Home() {
             console.error("Error deleting note:", error);
         }
     };
+
+
+  if (!selectedDate) {
+    return (
+        <div className="flex h-screen w-full items-center justify-center">
+            <Skeleton className="h-full w-full" />
+        </div>
+    );
+  }
 
 
   return (
@@ -209,7 +228,7 @@ export default function Home() {
       </Sidebar>
       <SidebarInset>
         <DailyNotes 
-            key={format(selectedDate, 'yyyy-MM-dd') + '-' + activeNoteId}
+            key={formattedDate + '-' + activeNoteId}
             selectedDate={selectedDate} 
             user={user}
             notes={notes}
