@@ -1,12 +1,44 @@
-
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /users/{userId}/{document=**} {
-      allow read, write, delete: if request.auth.uid == userId;
+
+    // Rules for the 'notes' collection
+    match /notes/{noteId} {
+      // Allow a user to create, update, or delete a note
+      // only if they are the owner.
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+      allow update, delete: if request.auth != null && request.auth.uid == resource.data.userId;
+
+      // Allow a user to read a single note if they own it.
+      allow get: if request.auth != null && request.auth.uid == resource.data.userId;
+
+      // Allow a user to list/query their own notes.
+      allow list: if request.auth != null && request.auth.uid == request.query.filters[0][2];
+    }
+    
+    // Rules for the 'themes' collection
+    match /themes/{themeId} {
+      // Allow read/write access only to the theme owner
+      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+      // For creation, check the incoming document's data
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+    }
+
+    // Rules for the 'tasks' collection
+    match /tasks/{taskId} {
+      // Allow read/write access only to the task owner
+      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+      // For creation, check the incoming document's data
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
+    }
+
+    // Rules for the 'taskProgress' collection
+    match /taskProgress/{progressId} {
+      // Allow read/write access only to the progress data owner
+      allow read, write: if request.auth != null && request.auth.uid == resource.data.userId;
+      // For creation, check the incoming document's data
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.userId;
     }
   }
 }
-
-    
