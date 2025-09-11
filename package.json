@@ -44,7 +44,7 @@
     "embla-carousel-react": "^8.1.7",
     "firebase": "11.0.0",
     "genkit": "^1.14.1",
-    "lucide-react": "^0.417.0",
+    "lucide-react": "^0.540.0",
     "next": "15.4.2",
     "next-themes": "^0.3.0",
     "react": "^18.3.1",
